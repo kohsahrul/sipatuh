@@ -944,6 +944,7 @@
         id: 1,
         nomorSurat: 'S-142/NB.22/2026',
         tanggalSurat: '10/11/2026',
+        tahunPelaporan: '2026',
         perihal: 'Sanksi Denda Keterlambatan Penyampaian Laporan Bulanan',
         tujuanPelaporan: 'OJK',
         reporterOwner: 'Divisi Akuntansi Manajemen dan Keuangan',
@@ -965,6 +966,7 @@
         id: 2,
         nomorSurat: 'SR-089/KMK.03/2026',
         tanggalSurat: '02/10/2026',
+        tahunPelaporan: '2026',
         perihal: 'Peringatan Tertulis Pelaporan Pajak Masa September 2026',
         tujuanPelaporan: 'KEMENKEU',
         reporterOwner: 'Divisi Kepatuhan',
@@ -1271,51 +1273,251 @@
     // =========================================================================
     // PAGE 1: DASHBOARD MONITORING (/dashboard-monitoring)
     // =========================================================================
-    function renderDashboard(container) {
-      container.innerHTML = `
-        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
-          <h2 class="text-[15px] font-normal text-gray-600 mb-6">
-            Daftar Kewajiban dan Realisasi
-          </h2>
+    let dashboardSanksiYear = 'all';
 
-          <!-- Grouped Bar Chart Container -->
-          <div class="w-full overflow-x-auto pb-2">
-            <div id="dashboard-chart-wrap" class="min-w-[960px] w-full">
-              ${buildDashboardChartSVG(chartDivisions)}
+    function filterDashboardSanksiYear() {
+      const sel = document.getElementById('dash-sanksi-year-filter');
+      dashboardSanksiYear = sel ? sel.value : 'all';
+      const container = document.getElementById('page-content');
+      if (container && currentRoute === 'dashboard-monitoring') {
+        renderDashboard(container);
+      }
+    }
+
+    function renderDashboard(container) {
+      const filteredSanksi = dashboardSanksiYear === 'all'
+        ? masterSanksiList
+        : masterSanksiList.filter(s => s.tahunPelaporan === dashboardSanksiYear);
+
+      const totalSanksi = filteredSanksi.length;
+      const pendingSanksi = filteredSanksi.filter(s => s.statusApproval === 'Pending Approval').length;
+      const approvedBelumSelesai = filteredSanksi.filter(s => s.statusApproval === 'Approved' && s.statusRealisasi !== 'Selesai / Sudah Dibayar').length;
+      const selesaiSanksi = filteredSanksi.filter(s => s.statusRealisasi === 'Selesai / Sudah Dibayar').length;
+
+      const totalNominalDenda = filteredSanksi.reduce((acc, s) => {
+        if (!s.nominalDenda || s.nominalDenda === '-') return acc;
+        const num = parseInt(String(s.nominalDenda).replace(/\D/g, ''), 10);
+        return acc + (isNaN(num) ? 0 : num);
+      }, 0);
+      const formattedTotalDenda = 'Rp ' + totalNominalDenda.toLocaleString('id-ID');
+
+      const jenisCategories = [
+        { label: 'Denda Administratif', color: '#ef4444', bg: 'bg-red-500' },
+        { label: 'Peringatan Tertulis', color: '#f59e0b', bg: 'bg-amber-500' },
+        { label: 'Teguran Keterlambatan', color: '#2557d6', bg: 'bg-[#2557d6]' },
+        { label: 'Pembatasan Kegiatan Usaha', color: '#6b7280', bg: 'bg-gray-500' }
+      ];
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <!-- CARD 1: DAFTAR KEWAJIBAN DAN REALISASI -->
+          <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+            <h2 class="text-[15px] font-normal text-gray-600 mb-6">
+              Daftar Kewajiban dan Realisasi
+            </h2>
+
+            <!-- Grouped Bar Chart Container -->
+            <div class="w-full overflow-x-auto pb-2">
+              <div id="dashboard-chart-wrap" class="min-w-[960px] w-full">
+                ${buildDashboardChartSVG(chartDivisions)}
+              </div>
+            </div>
+
+            <!-- Bottom Filter Controls (matching screenshot exactly) -->
+            <div class="mt-4 flex flex-wrap items-center gap-3">
+              <div class="relative">
+                <select id="dash-year-filter" onchange="filterDashboardChart()"
+                  class="appearance-none bg-[#f3f4f6] hover:bg-gray-200/70 border border-gray-300 rounded px-3.5 py-1.5 pr-8 text-[12px] text-gray-600 focus:outline-none focus:border-[#2557d6] cursor-pointer">
+                  <option value="all">Pilih tahun pelaporan</option>
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                </select>
+                <i class="fa-solid fa-caret-down text-[10px] text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              </div>
+
+              <div class="relative">
+                <select id="dash-month-filter" onchange="filterDashboardChart()"
+                  class="appearance-none bg-[#f3f4f6] hover:bg-gray-200/70 border border-gray-300 rounded px-3.5 py-1.5 pr-8 text-[12px] text-gray-600 focus:outline-none focus:border-[#2557d6] cursor-pointer">
+                  <option value="all">Pilih Bulan pelaporan</option>
+                  <option value="01">Januari</option>
+                  <option value="02">Februari</option>
+                  <option value="03">Maret</option>
+                  <option value="04">April</option>
+                  <option value="05">Mei</option>
+                  <option value="06">Juni</option>
+                  <option value="07">Juli</option>
+                  <option value="08">Agustus</option>
+                  <option value="09">September</option>
+                  <option value="10">Oktober</option>
+                  <option value="11">November</option>
+                  <option value="12">Desember</option>
+                </select>
+                <i class="fa-solid fa-caret-down text-[10px] text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              </div>
             </div>
           </div>
 
-          <!-- Bottom Filter Controls (matching screenshot exactly) -->
-          <div class="mt-4 flex flex-wrap items-center gap-3">
-            <div class="relative">
-              <select id="dash-year-filter" onchange="filterDashboardChart()"
-                class="appearance-none bg-[#f3f4f6] hover:bg-gray-200/70 border border-gray-300 rounded px-3.5 py-1.5 pr-8 text-[12px] text-gray-600 focus:outline-none focus:border-[#2557d6] cursor-pointer">
-                <option value="all">Pilih tahun pelaporan</option>
-                <option value="2026">2026</option>
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-              </select>
-              <i class="fa-solid fa-caret-down text-[10px] text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <!-- CARD 2: DASHBOARD MONITORING SANKSI -->
+          <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <div>
+                <h2 class="text-[15px] font-normal text-gray-600">
+                  Dashboard Monitoring Sanksi
+                </h2>
+                <p class="text-[11px] text-gray-400 mt-0.5">Rekapitulasi status persetujuan, realisasi tindak lanjut, dan total denda administratif dari regulator.</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="relative">
+                  <select id="dash-sanksi-year-filter" onchange="filterDashboardSanksiYear()"
+                    class="appearance-none bg-[#f3f4f6] hover:bg-gray-200/70 border border-gray-300 rounded px-3 py-1.5 pr-7 text-[11px] text-gray-600 focus:outline-none focus:border-[#2557d6] cursor-pointer">
+                    <option value="all" ${dashboardSanksiYear === 'all' ? 'selected' : ''}>Semua Tahun Pelaporan</option>
+                    <option value="2026" ${dashboardSanksiYear === '2026' ? 'selected' : ''}>Tahun 2026</option>
+                    <option value="2025" ${dashboardSanksiYear === '2025' ? 'selected' : ''}>Tahun 2025</option>
+                    <option value="2024" ${dashboardSanksiYear === '2024' ? 'selected' : ''}>Tahun 2024</option>
+                  </select>
+                  <i class="fa-solid fa-caret-down text-[10px] text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                </div>
+                <button onclick="navigateTo('report-sanksi')"
+                  class="px-3 py-1.5 bg-[#f3f4f6] hover:bg-gray-200 border border-gray-300 rounded text-[11px] text-gray-700 font-medium transition-colors">
+                  Report Sanksi
+                </button>
+                <button onclick="navigateTo('realisasi-sanksi')"
+                  class="px-3 py-1.5 bg-[#2557d6] hover:bg-blue-700 text-white rounded text-[11px] font-medium shadow-sm transition-colors">
+                  Realisasi Sanksi
+                </button>
+              </div>
             </div>
 
-            <div class="relative">
-              <select id="dash-month-filter" onchange="filterDashboardChart()"
-                class="appearance-none bg-[#f3f4f6] hover:bg-gray-200/70 border border-gray-300 rounded px-3.5 py-1.5 pr-8 text-[12px] text-gray-600 focus:outline-none focus:border-[#2557d6] cursor-pointer">
-                <option value="all">Pilih Bulan pelaporan</option>
-                <option value="01">Januari</option>
-                <option value="02">Februari</option>
-                <option value="03">Maret</option>
-                <option value="04">April</option>
-                <option value="05">Mei</option>
-                <option value="06">Juni</option>
-                <option value="07">Juli</option>
-                <option value="08">Agustus</option>
-                <option value="09">September</option>
-                <option value="10">Oktober</option>
-                <option value="11">November</option>
-                <option value="12">Desember</option>
-              </select>
-              <i class="fa-solid fa-caret-down text-[10px] text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <!-- 5 KPI Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6 text-xs">
+              <div onclick="navigateTo('report-sanksi')" class="cursor-pointer border border-gray-200 hover:border-blue-300 rounded p-3.5 bg-[#f9fafb] flex items-center justify-between transition-colors">
+                <div>
+                  <p class="text-[11px] text-gray-500">Total Sanksi Tercatat</p>
+                  <p class="text-xl font-semibold text-gray-800 mt-0.5">${totalSanksi}</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-blue-100 text-[#2557d6] flex items-center justify-center">
+                  <i class="fa-solid fa-gavel text-sm"></i>
+                </div>
+              </div>
+
+              <div onclick="navigateTo('report-sanksi')" class="cursor-pointer border border-gray-200 hover:border-amber-300 rounded p-3.5 bg-[#f9fafb] flex items-center justify-between transition-colors">
+                <div>
+                  <p class="text-[11px] text-gray-500">Pending Approval</p>
+                  <p class="text-xl font-semibold text-amber-600 mt-0.5">${pendingSanksi}</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                  <i class="fa-solid fa-hourglass-half text-sm"></i>
+                </div>
+              </div>
+
+              <div onclick="navigateTo('realisasi-sanksi')" class="cursor-pointer border border-gray-200 hover:border-sky-300 rounded p-3.5 bg-[#f9fafb] flex items-center justify-between transition-colors">
+                <div>
+                  <p class="text-[11px] text-gray-500">Dalam Proses Realisasi</p>
+                  <p class="text-xl font-semibold text-sky-600 mt-0.5">${approvedBelumSelesai}</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center">
+                  <i class="fa-solid fa-spinner text-sm"></i>
+                </div>
+              </div>
+
+              <div onclick="navigateTo('realisasi-sanksi')" class="cursor-pointer border border-gray-200 hover:border-emerald-300 rounded p-3.5 bg-[#f9fafb] flex items-center justify-between transition-colors">
+                <div>
+                  <p class="text-[11px] text-gray-500">Selesai Direalisasikan</p>
+                  <p class="text-xl font-semibold text-emerald-600 mt-0.5">${selesaiSanksi}</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <i class="fa-solid fa-circle-check text-sm"></i>
+                </div>
+              </div>
+
+              <div class="border border-gray-200 rounded p-3.5 bg-[#f9fafb] flex items-center justify-between">
+                <div class="min-w-0 pr-2">
+                  <p class="text-[11px] text-gray-500">Total Denda Administratif</p>
+                  <p class="text-[15px] font-semibold text-red-600 mt-1 truncate" title="${formattedTotalDenda}">${formattedTotalDenda}</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <i class="fa-solid fa-coins text-sm"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Grid: Distribusi Jenis Sanksi + Daftar Sanksi Terkini -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+              <!-- Left 4 Cols: Breakdown Jenis Sanksi -->
+              <div class="lg:col-span-4 border border-gray-200 rounded p-4 bg-[#f9fafb]">
+                <h3 class="text-[12px] font-semibold text-gray-700 mb-3.5">Distribusi Jenis Sanksi</h3>
+                <div class="space-y-3 text-[11.5px]">
+                  ${jenisCategories.map(cat => {
+                    const count = filteredSanksi.filter(s => s.jenisSanksi === cat.label).length;
+                    const pct = totalSanksi > 0 ? Math.round((count / totalSanksi) * 100) : 0;
+                    return `
+                      <div>
+                        <div class="flex items-center justify-between text-gray-600 mb-1">
+                          <span>${cat.label}</span>
+                          <span class="font-semibold text-gray-800">${count} (${pct}%)</span>
+                        </div>
+                        <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div class="${cat.bg} h-full rounded-full transition-all duration-300" style="width: ${pct}%"></div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+              <!-- Right 8 Cols: Ringkasan Status Sanksi Terkini -->
+              <div class="lg:col-span-8 border border-gray-200 rounded overflow-hidden">
+                <div class="px-4 py-2.5 bg-[#f9fafb] border-b border-gray-200 flex items-center justify-between">
+                  <h3 class="text-[12px] font-semibold text-gray-700">Monitoring Status Sanksi Terkini</h3>
+                  <span class="text-[11px] text-gray-400">Menampilkan ${Math.min(5, filteredSanksi.length)} data terbaru</span>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full border-collapse text-[11px] text-gray-600">
+                    <thead>
+                      <tr class="bg-white border-b border-gray-200 text-gray-700 font-semibold text-left">
+                        <th class="py-2.5 px-3 border-r border-gray-100">No. Surat</th>
+                        <th class="py-2.5 px-3 border-r border-gray-100">Tahun</th>
+                        <th class="py-2.5 px-3 border-r border-gray-100">Reporter Owner</th>
+                        <th class="py-2.5 px-3 border-r border-gray-100">Jenis Sanksi</th>
+                        <th class="py-2.5 px-3 border-r border-gray-100">Jatuh Tempo</th>
+                        <th class="py-2.5 px-3 border-r border-gray-100">Approval</th>
+                        <th class="py-2.5 px-3">Realisasi</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                      ${filteredSanksi.length === 0
+                        ? `<tr><td colspan="7" class="py-5 text-center text-gray-400">Tidak ada data sanksi untuk tahun pelaporan yang dipilih.</td></tr>`
+                        : filteredSanksi.slice(0, 5).map((s, idx) => {
+                        const apprBadge = s.statusApproval === 'Approved'
+                          ? `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-medium">Approved</span>`
+                          : s.statusApproval === 'Rejected'
+                            ? `<span class="px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 text-[10px] font-medium">Rejected</span>`
+                            : `<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-medium">Pending</span>`;
+
+                        const realBadge = s.statusRealisasi === 'Selesai / Sudah Dibayar'
+                          ? `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-medium">Selesai</span>`
+                          : `<span class="px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 text-[10px] font-medium">${s.statusRealisasi}</span>`;
+
+                        return `
+                          <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40">
+                            <td class="py-2.5 px-3 border-r border-gray-100 font-medium text-gray-800 whitespace-nowrap">${s.nomorSurat}</td>
+                            <td class="py-2.5 px-3 border-r border-gray-100 whitespace-nowrap">${s.tahunPelaporan || '-'}</td>
+                            <td class="py-2.5 px-3 border-r border-gray-100">${s.reporterOwner}</td>
+                            <td class="py-2.5 px-3 border-r border-gray-100 whitespace-nowrap">
+                              <div>${s.jenisSanksi}</div>
+                              ${s.nominalDenda !== '-' ? `<div class="text-[10px] text-red-600 font-medium">Rp ${s.nominalDenda}</div>` : ''}
+                            </td>
+                            <td class="py-2.5 px-3 border-r border-gray-100 whitespace-nowrap">${s.tanggalJatuhTempo}</td>
+                            <td class="py-2.5 px-3 border-r border-gray-100 whitespace-nowrap">${apprBadge}</td>
+                            <td class="py-2.5 px-3 whitespace-nowrap">${realBadge}</td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1771,6 +1973,20 @@
               </div>
             </div>
 
+            <!-- Row 2B: Tahun Pelaporan -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Tahun Pelaporan <span class="text-red-500">*</span></label>
+              <div class="md:col-span-9">
+                <select id="snk-tahun-pelaporan" required class="sipatuh-input text-gray-600">
+                  <option value="">Pilih Tahun Pelaporan</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                </select>
+              </div>
+            </div>
+
             <!-- Row 3: Perihal -->
             <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
               <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Perihal</label>
@@ -1922,6 +2138,7 @@
       e.preventDefault();
       const nomorSurat = document.getElementById('snk-nomor-surat').value.trim();
       const tglSuratRaw = document.getElementById('snk-tanggal-surat').value;
+      const tahunPelaporan = document.getElementById('snk-tahun-pelaporan').value;
       const perihal = document.getElementById('snk-perihal').value.trim();
       const tujuan = document.getElementById('snk-tujuan').value;
       const owner = document.getElementById('snk-owner').value;
@@ -1933,16 +2150,18 @@
 
       const tglSuratFmt = tglSuratRaw ? tglSuratRaw.split('-').reverse().join('/') : '-';
       const tglTempoFmt = tglTempoRaw ? tglTempoRaw.split('-').reverse().join('/') : '-';
+      const nominalFormatted = jenisSanksi === 'Denda Administratif' && nominalVal ? nominalVal : '-';
 
-      masterSanksiList.unshift({
+      const newSanksi = {
         id: masterSanksiList.reduce((max, s) => Math.max(max, s.id), 0) + 1,
         nomorSurat: nomorSurat,
         tanggalSurat: tglSuratFmt,
+        tahunPelaporan: tahunPelaporan || '2026',
         perihal: perihal,
         tujuanPelaporan: tujuan,
         reporterOwner: owner,
         jenisSanksi: jenisSanksi,
-        nominalDenda: jenisSanksi === 'Denda Administratif' && nominalVal ? nominalVal : '-',
+        nominalDenda: nominalFormatted,
         tanggalJatuhTempo: tglTempoFmt,
         regulasi: regulasi || '-',
         keterangan: keterangan || '-',
@@ -1953,11 +2172,125 @@
         statusRealisasi: 'Belum Realisasi',
         tanggalRealisasi: '-',
         buktiRealisasi: '',
-        keteranganRealisasi: ''
+        keteranganRealisasi: '',
+        sentMilestones: []
+      };
+
+      masterSanksiList.unshift(newSanksi);
+
+      // OTOMATIS KIRIM EMAIL BLAST SAAT ADD DATA SANKSI DISUBMIT
+      triggerAutoEmailOnSanksiCreated(newSanksi);
+
+      showToast(`Data sanksi ${nomorSurat} tersimpan & Email Blast otomatis terkirim ke PIC ${owner}!`);
+      navigateTo('report-sanksi');
+    }
+
+    function getCurrentTimestampStr() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+
+    function triggerAutoEmailOnSanksiCreated(sanksi) {
+      const picUser = masterUsersList.find(u => u.divisi === sanksi.reporterOwner) || masterUsersList[0];
+      const nextId = riwayatNotifikasiList.reduce((max, n) => Math.max(max, n.id), 0) + 1;
+      const nominalInfo = sanksi.nominalDenda !== '-' ? ` sebesar Rp ${sanksi.nominalDenda}` : '';
+
+      riwayatNotifikasiList.unshift({
+        id: nextId,
+        waktuKirim: getCurrentTimestampStr(),
+        channel: 'Email Blast',
+        kategori: 'Notifikasi Sanksi Baru (Auto-Email)',
+        penerima: `${picUser.nama} (${picUser.email})`,
+        divisi: sanksi.reporterOwner,
+        subjek: `[SIPATUH ALERT] Sanksi Regulator Baru: ${sanksi.nomorSurat} (${sanksi.jenisSanksi})`,
+        isiPesan: `Yth. Bapak/Ibu ${picUser.nama} (${sanksi.reporterOwner}),\n\nTelah dicatat surat sanksi baru dari regulator ${sanksi.tujuanPelaporan} dengan rincian:\n- Nomor Surat: ${sanksi.nomorSurat}\n- Perihal: ${sanksi.perihal}\n- Jenis Sanksi: ${sanksi.jenisSanksi}${nominalInfo}\n- Tanggal Jatuh Tempo: ${sanksi.tanggalJatuhTempo}\n\nSistem akan mengirimkan pengingat WA Blast otomatis pada H-7, H-3, H-2, H-1, dan H-0 sebelum tanggal jatuh tempo. Mohon segera ditindaklanjuti melalui aplikasi SIPATUH.`,
+        status: 'Terkirim'
+      });
+    }
+
+    function parseIndoDateToMidnight(indoDateStr) {
+      if (!indoDateStr || indoDateStr === '-') return null;
+      const parts = indoDateStr.split('/');
+      if (parts.length !== 3) return null;
+      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+
+    function runWaBlastSchedulerSimulation(forceDemoAllMilestones = false) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const targetMilestones = [7, 3, 2, 1, 0];
+      let sentCount = 0;
+
+      const activeSanksi = masterSanksiList.filter(s => s.statusRealisasi !== 'Selesai / Sudah Dibayar');
+
+      if (activeSanksi.length === 0) {
+        showToast('Tidak ada data sanksi aktif yang belum direalisasikan.', 'info');
+        return;
+      }
+
+      activeSanksi.forEach((sanksi) => {
+        if (!Array.isArray(sanksi.sentMilestones)) sanksi.sentMilestones = [];
+        const dueDate = parseIndoDateToMidnight(sanksi.tanggalJatuhTempo);
+        const picUser = masterUsersList.find(u => u.divisi === sanksi.reporterOwner) || masterUsersList[0];
+        const waNumber = picUser.hp2 || picUser.hp1;
+
+        if (forceDemoAllMilestones) {
+          // Simulasi seluruh jadwal H-7, H-3, H-2, H-1, H-0 untuk sanksi aktif pertama agar terlihat langsung
+          const milestonesToSend = targetMilestones.filter(m => !sanksi.sentMilestones.includes(m));
+          const listToRun = milestonesToSend.length > 0 ? milestonesToSend : targetMilestones;
+          listToRun.forEach((daysLeft) => {
+            const labelH = daysLeft === 0 ? 'H-0 (Hari Jatuh Tempo)' : `H-${daysLeft} Jatuh Tempo`;
+            const nextId = riwayatNotifikasiList.reduce((max, n) => Math.max(max, n.id), 0) + 1;
+            riwayatNotifikasiList.unshift({
+              id: nextId,
+              waktuKirim: getCurrentTimestampStr(),
+              channel: 'WA Blast',
+              kategori: `Reminder Sanksi ${labelH}`,
+              penerima: `${picUser.nama} (${waNumber})`,
+              divisi: sanksi.reporterOwner,
+              subjek: `WA Blast ${labelH} - Surat ${sanksi.nomorSurat}`,
+              isiPesan: `*[SIPATUH PNM - WA REMINDER ${labelH.toUpperCase()}]*\nYth. Bapak/Ibu ${picUser.nama} (${sanksi.reporterOwner}),\nDiingatkan batas waktu tindak lanjut sanksi regulator:\n• No. Surat: *${sanksi.nomorSurat}* (${sanksi.tujuanPelaporan})\n• Jenis: *${sanksi.jenisSanksi}*${sanksi.nominalDenda !== '-' ? ` (Rp ${sanksi.nominalDenda})` : ''}\n• Jatuh Tempo: *${sanksi.tanggalJatuhTempo}* (${daysLeft === 0 ? 'HARI INI' : `${daysLeft} hari lagi`})\n\nMohon segera menyelesaikan realisasi sanksi di kepatuhan.pnm.co.id.`,
+              status: 'Terkirim'
+            });
+            if (!sanksi.sentMilestones.includes(daysLeft)) {
+              sanksi.sentMilestones.push(daysLeft);
+            }
+            sentCount++;
+          });
+        } else if (dueDate) {
+          const diffDays = Math.round((dueDate - today) / (1000 * 60 * 60 * 24));
+          if (targetMilestones.includes(diffDays) && !sanksi.sentMilestones.includes(diffDays)) {
+            const labelH = diffDays === 0 ? 'H-0 (Hari Jatuh Tempo)' : `H-${diffDays} Jatuh Tempo`;
+            const nextId = riwayatNotifikasiList.reduce((max, n) => Math.max(max, n.id), 0) + 1;
+            riwayatNotifikasiList.unshift({
+              id: nextId,
+              waktuKirim: getCurrentTimestampStr(),
+              channel: 'WA Blast',
+              kategori: `Reminder Sanksi ${labelH}`,
+              penerima: `${picUser.nama} (${waNumber})`,
+              divisi: sanksi.reporterOwner,
+              subjek: `WA Blast ${labelH} - Surat ${sanksi.nomorSurat}`,
+              isiPesan: `*[SIPATUH PNM - WA REMINDER ${labelH.toUpperCase()}]*\nYth. Bapak/Ibu ${picUser.nama} (${sanksi.reporterOwner}),\nDiingatkan batas waktu tindak lanjut sanksi regulator:\n• No. Surat: *${sanksi.nomorSurat}* (${sanksi.tujuanPelaporan})\n• Jenis: *${sanksi.jenisSanksi}*${sanksi.nominalDenda !== '-' ? ` (Rp ${sanksi.nominalDenda})` : ''}\n• Jatuh Tempo: *${sanksi.tanggalJatuhTempo}* (${diffDays === 0 ? 'HARI INI' : `${diffDays} hari lagi`})\n\nMohon segera menyelesaikan realisasi sanksi di kepatuhan.pnm.co.id.`,
+              status: 'Terkirim'
+            });
+            sanksi.sentMilestones.push(diffDays);
+            sentCount++;
+          }
+        }
       });
 
-      showToast('Data sanksi berhasil ditambahkan dan masuk ke Report Sanksi untuk proses Approval!');
-      navigateTo('report-sanksi');
+      const container = document.getElementById('page-content');
+      if (container && currentRoute === 'riwayat-notifikasi') {
+        renderRiwayatNotifikasi(container);
+      }
+
+      if (sentCount > 0) {
+        showToast(`Scheduler WA Blast berhasil mengirimkan ${sentCount} notifikasi pengingat jatuh tempo!`);
+      } else {
+        showToast('Tidak ada sanksi dengan selisih tepat H-7/H-3/H-2/H-1/H-0 hari ini. Gunakan tombol "Simulasi H-7 s/d H-0" untuk uji coba.', 'info');
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -1967,19 +2300,21 @@
       tujuan: 'All',
       jenis: 'All',
       statusApproval: 'All',
+      tahun: 'All',
       search: ''
     };
 
     function renderReportSanksi(container) {
       const tujuans = ['All', ...new Set(masterSanksiList.map(s => s.tujuanPelaporan).filter(Boolean))];
       const jenises = ['All', 'Denda Administratif', 'Peringatan Tertulis', 'Teguran Keterlambatan', 'Pembatasan Kegiatan Usaha'];
+      const tahuns = ['All', '2026', '2025', '2024', '2023'];
 
       container.innerHTML = `
         <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
             <div>
               <h2 class="text-[15px] font-normal text-gray-600">Report Sanksi</h2>
-              <p class="text-[11px] text-gray-400 mt-0.5">Daftar pengajuan sanksi dari Add Data Sanksi yang memerlukan verifikasi & approval sebelum masuk ke Realisasi Sanksi.</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Alur Approval: Data dari Add Data Sanksi diverifikasi &amp; di-Approve di halaman ini untuk diteruskan ke Realisasi Sanksi.</p>
             </div>
             <button onclick="navigateTo('add-data-sanksi')"
               class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5">
@@ -1989,7 +2324,7 @@
           </div>
 
           <!-- Filter Section -->
-          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 text-[11.5px] mb-5">
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 text-[11.5px] mb-5">
             <div>
               <label class="block text-gray-600 font-medium mb-1">Tujuan Pelaporan</label>
               <select id="rsnk-flt-tujuan" onchange="applyReportSanksiFilters()" class="sipatuh-input text-gray-600">
@@ -2000,6 +2335,12 @@
               <label class="block text-gray-600 font-medium mb-1">Jenis Sanksi</label>
               <select id="rsnk-flt-jenis" onchange="applyReportSanksiFilters()" class="sipatuh-input text-gray-600">
                 ${jenises.map(v => `<option value="${v}" ${reportSanksiFilters.jenis === v ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Tahun Pelaporan</label>
+              <select id="rsnk-flt-tahun" onchange="applyReportSanksiFilters()" class="sipatuh-input text-gray-600">
+                ${tahuns.map(v => `<option value="${v}" ${reportSanksiFilters.tahun === v ? 'selected' : ''}>${v}</option>`).join('')}
               </select>
             </div>
             <div>
@@ -2028,12 +2369,13 @@
 
           <!-- Table -->
           <div class="overflow-x-auto border border-gray-200 rounded-sm">
-            <table class="min-w-[1480px] w-full border-collapse text-[11px] text-gray-600">
+            <table class="min-w-[1540px] w-full border-collapse text-[11px] text-gray-600">
               <thead>
                 <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
                   <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-40">Nomor Surat Regulator</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal Surat</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-24">Tahun<br>Pelaporan</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-60">Perihal</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-28">Tujuan<br>Pelaporan</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-44">Reporter Owner</th>
@@ -2058,6 +2400,7 @@
     function applyReportSanksiFilters() {
       reportSanksiFilters.tujuan = document.getElementById('rsnk-flt-tujuan').value;
       reportSanksiFilters.jenis = document.getElementById('rsnk-flt-jenis').value;
+      reportSanksiFilters.tahun = document.getElementById('rsnk-flt-tahun').value;
       reportSanksiFilters.statusApproval = document.getElementById('rsnk-flt-status').value;
       reportSanksiFilters.search = document.getElementById('rsnk-search').value.toLowerCase();
       renderReportSanksiRows();
@@ -2070,6 +2413,7 @@
       const filtered = masterSanksiList.filter(s => {
         if (reportSanksiFilters.tujuan !== 'All' && s.tujuanPelaporan !== reportSanksiFilters.tujuan) return false;
         if (reportSanksiFilters.jenis !== 'All' && s.jenisSanksi !== reportSanksiFilters.jenis) return false;
+        if (reportSanksiFilters.tahun !== 'All' && s.tahunPelaporan !== reportSanksiFilters.tahun) return false;
         if (reportSanksiFilters.statusApproval !== 'All' && s.statusApproval !== reportSanksiFilters.statusApproval) return false;
         if (reportSanksiFilters.search) {
           const hay = Object.values(s).join(' ').toLowerCase();
@@ -2079,7 +2423,7 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="13" class="py-6 text-center text-gray-500">Tidak ada data sanksi yang sesuai filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="14" class="py-6 text-center text-gray-500">Tidak ada data sanksi yang sesuai filter.</td></tr>`;
         return;
       }
 
@@ -2098,6 +2442,7 @@
             <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
             <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${s.nomorSurat}</td>
             <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalSurat}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-700">${s.tahunPelaporan || '-'}</td>
             <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.perihal}</td>
             <td class="py-3.5 px-3 border-r border-gray-100">${s.tujuanPelaporan}</td>
             <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.reporterOwner}</td>
@@ -2185,6 +2530,7 @@
     let realisasiSanksiFilters = {
       owner: 'All',
       jenis: 'All',
+      tahun: 'All',
       statusRealisasi: 'All',
       search: ''
     };
@@ -2193,6 +2539,7 @@
       const approvedList = masterSanksiList.filter(s => s.statusApproval === 'Approved');
       const owners = ['All', ...new Set(approvedList.map(s => s.reporterOwner).filter(Boolean))];
       const jenises = ['All', 'Denda Administratif', 'Peringatan Tertulis', 'Teguran Keterlambatan', 'Pembatasan Kegiatan Usaha'];
+      const tahuns = ['All', '2026', '2025', '2024', '2023'];
 
       container.innerHTML = `
         <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
@@ -2209,7 +2556,7 @@
           </div>
 
           <!-- Filter Section -->
-          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 text-[11.5px] mb-5">
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 text-[11.5px] mb-5">
             <div>
               <label class="block text-gray-600 font-medium mb-1">Reporter Owner</label>
               <select id="realsnk-flt-owner" onchange="applyRealisasiSanksiFilters()" class="sipatuh-input text-gray-600">
@@ -2220,6 +2567,12 @@
               <label class="block text-gray-600 font-medium mb-1">Jenis Sanksi</label>
               <select id="realsnk-flt-jenis" onchange="applyRealisasiSanksiFilters()" class="sipatuh-input text-gray-600">
                 ${jenises.map(v => `<option value="${v}" ${realisasiSanksiFilters.jenis === v ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Tahun Pelaporan</label>
+              <select id="realsnk-flt-tahun" onchange="applyRealisasiSanksiFilters()" class="sipatuh-input text-gray-600">
+                ${tahuns.map(v => `<option value="${v}" ${realisasiSanksiFilters.tahun === v ? 'selected' : ''}>${v}</option>`).join('')}
               </select>
             </div>
             <div>
@@ -2248,11 +2601,12 @@
 
           <!-- Table -->
           <div class="overflow-x-auto border border-gray-200 rounded-sm">
-            <table class="min-w-[1560px] w-full border-collapse text-[11px] text-gray-600">
+            <table class="min-w-[1620px] w-full border-collapse text-[11px] text-gray-600">
               <thead>
                 <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
                   <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-40">Nomor Surat Regulator</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-24">Tahun<br>Pelaporan</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-56">Perihal</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-28">Tujuan<br>Pelaporan</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-44">Reporter Owner</th>
@@ -2278,6 +2632,7 @@
     function applyRealisasiSanksiFilters() {
       realisasiSanksiFilters.owner = document.getElementById('realsnk-flt-owner').value;
       realisasiSanksiFilters.jenis = document.getElementById('realsnk-flt-jenis').value;
+      realisasiSanksiFilters.tahun = document.getElementById('realsnk-flt-tahun').value;
       realisasiSanksiFilters.statusRealisasi = document.getElementById('realsnk-flt-status').value;
       realisasiSanksiFilters.search = document.getElementById('realsnk-search').value.toLowerCase();
       renderRealisasiSanksiRows();
@@ -2291,6 +2646,7 @@
       const filtered = approvedOnly.filter(s => {
         if (realisasiSanksiFilters.owner !== 'All' && s.reporterOwner !== realisasiSanksiFilters.owner) return false;
         if (realisasiSanksiFilters.jenis !== 'All' && s.jenisSanksi !== realisasiSanksiFilters.jenis) return false;
+        if (realisasiSanksiFilters.tahun !== 'All' && s.tahunPelaporan !== realisasiSanksiFilters.tahun) return false;
         if (realisasiSanksiFilters.statusRealisasi !== 'All' && s.statusRealisasi !== realisasiSanksiFilters.statusRealisasi) return false;
         if (realisasiSanksiFilters.search) {
           const hay = Object.values(s).join(' ').toLowerCase();
@@ -2300,7 +2656,7 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="13" class="py-6 text-center text-gray-500">Belum ada data sanksi yang di-Approve atau sesuai filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="14" class="py-6 text-center text-gray-500">Belum ada data sanksi yang di-Approve atau sesuai filter.</td></tr>`;
         return;
       }
 
@@ -2314,6 +2670,7 @@
           <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40 align-top">
             <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
             <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${s.nomorSurat}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-700">${s.tahunPelaporan || '-'}</td>
             <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.perihal}</td>
             <td class="py-3.5 px-3 border-r border-gray-100">${s.tujuanPelaporan}</td>
             <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.reporterOwner}</td>
@@ -2399,13 +2756,14 @@
       const rows = mode === 'realisasi'
         ? masterSanksiList.filter(s => s.statusApproval === 'Approved')
         : masterSanksiList;
-      const headers = ['No', 'Nomor Surat Regulator', 'Tanggal Surat', 'Perihal', 'Tujuan Pelaporan', 'Reporter Owner', 'Jenis Sanksi', 'Nominal Denda', 'Tanggal Jatuh Tempo', 'Status Approval', 'Status Realisasi', 'Tanggal Realisasi'];
+      const headers = ['No', 'Nomor Surat Regulator', 'Tanggal Surat', 'Tahun Pelaporan', 'Perihal', 'Tujuan Pelaporan', 'Reporter Owner', 'Jenis Sanksi', 'Nominal Denda', 'Tanggal Jatuh Tempo', 'Status Approval', 'Status Realisasi', 'Tanggal Realisasi'];
       const csvLines = [
         headers.join(','),
         ...rows.map((s, idx) => [
           idx + 1,
           `"${(s.nomorSurat || '').replace(/"/g, '""')}"`,
           `"${(s.tanggalSurat || '').replace(/"/g, '""')}"`,
+          `"${(s.tahunPelaporan || '').replace(/"/g, '""')}"`,
           `"${(s.perihal || '').replace(/"/g, '""')}"`,
           `"${(s.tujuanPelaporan || '').replace(/"/g, '""')}"`,
           `"${(s.reporterOwner || '').replace(/"/g, '""')}"`,
@@ -2452,13 +2810,20 @@
           <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
             <div>
               <h2 class="text-[15px] font-normal text-gray-600">Riwayat Notifikasi (Email Blast &amp; WA Blast)</h2>
-              <p class="text-[11px] text-gray-400 mt-0.5">Log pengiriman notifikasi otomatis maupun manual melalui saluran Email Blast dan WhatsApp (WA) Blast kepada PIC Divisi.</p>
+              <p class="text-[11px] text-gray-400 mt-0.5">Otomatis mengirim <strong>Email Blast</strong> saat Add Data Sanksi &amp; <strong>WA Blast</strong> pada H-7, H-3, H-2, H-1, dan H-0 jatuh tempo.</p>
             </div>
-            <button onclick="openBlastModal()"
-              class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5 transition-colors">
-              <i class="fa-solid fa-paper-plane text-[10px]"></i>
-              <span>Kirim Blast Manual</span>
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="runWaBlastSchedulerSimulation(true)"
+                class="px-3.5 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5 transition-colors">
+                <i class="fa-brands fa-whatsapp text-xs"></i>
+                <span>Simulasi Scheduler WA Blast (H-7, H-3, H-2, H-1, H-0)</span>
+              </button>
+              <button onclick="openBlastModal()"
+                class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                <span>Kirim Blast Manual</span>
+              </button>
+            </div>
           </div>
 
           <!-- Ringkasan Statistik Channel Blast -->
@@ -3354,12 +3719,13 @@
             </button>
           </div>
           <div class="overflow-x-auto border border-gray-200 rounded-sm">
-            <table class="min-w-[1380px] w-full border-collapse text-[11px] text-gray-600">
+            <table class="min-w-[1440px] w-full border-collapse text-[11px] text-gray-600">
               <thead>
                 <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
                   <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-40">Nomor Surat Regulator</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal Surat</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-24">Tahun<br>Pelaporan</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-64">Perihal</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-28">Tujuan<br>Pelaporan</th>
                   <th class="py-3 px-3 border-r border-gray-100 w-48">Reporter Owner</th>
@@ -3376,6 +3742,7 @@
                     <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
                     <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${s.nomorSurat}</td>
                     <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalSurat}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-700">${s.tahunPelaporan || '-'}</td>
                     <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.perihal}</td>
                     <td class="py-3.5 px-3 border-r border-gray-100">${s.tujuanPelaporan}</td>
                     <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.reporterOwner}</td>
