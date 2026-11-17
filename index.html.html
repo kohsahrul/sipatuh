@@ -1,0 +1,3579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIPATUH - Sistem Informasi Kepatuhan</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Open Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Font Awesome for crisp UI & Sidebar icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #e9edf4;
+      color: #4b5563;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Smooth Marquee Animation */
+    @keyframes marqueeScroll {
+      0% {
+        transform: translateX(0%);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    .marquee-wrapper {
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .marquee-track {
+      display: inline-flex;
+      white-space: nowrap;
+      animation: marqueeScroll 36s linear infinite;
+    }
+
+    .marquee-wrapper:hover .marquee-track {
+      animation-play-state: paused;
+    }
+
+    /* Custom Scrollbar for horizontal tables & sidebar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    /* Sidebar transitions */
+    .sidebar-panel {
+      width: 240px;
+      min-width: 240px;
+      transition: all 0.25s ease-in-out;
+    }
+    .sidebar-panel.collapsed {
+      margin-left: -240px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 50;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
+      }
+      .sidebar-panel.collapsed {
+        margin-left: -240px;
+      }
+    }
+
+    /* DataTables style sort arrows */
+    .sort-header {
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      padding-right: 22px !important;
+    }
+    .sort-icons {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: #cbd5e1;
+      line-height: 1;
+    }
+    .sort-header.asc .sort-up,
+    .sort-header.desc .sort-down {
+      color: #475569;
+    }
+
+    /* Form controls styling to match screenshot */
+    .sipatuh-input {
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      padding: 7px 12px;
+      font-size: 12.5px;
+      color: #374151;
+      background-color: #ffffff;
+      width: 100%;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .sipatuh-input:focus {
+      outline: none;
+      border-color: #2557d6;
+      box-shadow: 0 0 0 2px rgba(37, 87, 214, 0.12);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast / Message Notification Banner (No alert() used) -->
+  <div id="toast-container" class="fixed top-16 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Mobile Backdrop when sidebar open -->
+  <div id="mobile-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/30 z-40 hidden md:hidden"></div>
+
+  <!-- Main App Wrapper -->
+  <div class="flex flex-1 min-h-screen">
+
+    <!-- LEFT SIDEBAR -->
+    <aside id="sidebar" class="sidebar-panel bg-white border-r border-gray-200 flex flex-col select-none shrink-0">
+      <!-- Top Brand Logo Area -->
+      <div class="h-[56px] flex items-center justify-center border-b border-gray-200 px-4">
+        <a href="#dashboard-monitoring" onclick="navigateTo('dashboard-monitoring'); return false;" class="text-[20px] font-medium tracking-wider text-gray-700 hover:text-gray-900">
+          SIPATUH
+        </a>
+      </div>
+
+      <!-- Navigation List -->
+      <nav class="flex-1 overflow-y-auto py-3 px-2.5 space-y-1 text-[11px] font-medium text-gray-500">
+        <!-- 1. DASHBOARD -->
+        <div>
+          <button onclick="navigateTo('dashboard-monitoring')" data-nav="dashboard-monitoring"
+            class="nav-item w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-house text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">DASHBOARD</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- 2. ADD (Expandable) -->
+        <div>
+          <button onclick="toggleMenu('menu-add')" id="btn-menu-add"
+            class="menu-parent w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-file-lines text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">ADD</span>
+            </span>
+            <i id="arrow-menu-add" class="fa-solid fa-chevron-right text-[9px] text-gray-400 transition-transform duration-200"></i>
+          </button>
+          <div id="menu-add" class="hidden pl-4 pr-1 py-1 space-y-1">
+            <button onclick="navigateTo('add-data-regulasi')" data-nav="add-data-regulasi"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Add Data Regulasi</span>
+            </button>
+            <button onclick="navigateTo('add-data-kewajiban')" data-nav="add-data-kewajiban"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Add Data Kewajiban</span>
+            </button>
+            <button onclick="navigateTo('add-data-sanksi')" data-nav="add-data-sanksi"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Add Data Sanksi</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. REPORT (Expandable) -->
+        <div>
+          <button onclick="toggleMenu('menu-report')" id="btn-menu-report"
+            class="menu-parent w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-file-lines text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">REPORT</span>
+            </span>
+            <i id="arrow-menu-report" class="fa-solid fa-chevron-right text-[9px] text-gray-400 transition-transform duration-200"></i>
+          </button>
+          <div id="menu-report" class="hidden pl-4 pr-1 py-1 space-y-1">
+            <button onclick="navigateTo('report-kewajiban')" data-nav="report-kewajiban"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Report Kewajiban</span>
+            </button>
+            <button onclick="navigateTo('report-regulasi-eksternal')" data-nav="report-regulasi-eksternal"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Report Regulasi Eksternal</span>
+            </button>
+            <button onclick="navigateTo('pelaporan')" data-nav="pelaporan"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Realisasi Pelaporan</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3B. SANKSI (Expandable - Right below REPORT) -->
+        <div>
+          <button onclick="toggleMenu('menu-sanksi')" id="btn-menu-sanksi"
+            class="menu-parent w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-triangle-exclamation text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">SANKSI</span>
+            </span>
+            <i id="arrow-menu-sanksi" class="fa-solid fa-chevron-right text-[9px] text-gray-400 transition-transform duration-200"></i>
+          </button>
+          <div id="menu-sanksi" class="hidden pl-4 pr-1 py-1 space-y-1">
+            <button onclick="navigateTo('report-sanksi')" data-nav="report-sanksi"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Report Sanksi</span>
+            </button>
+            <button onclick="navigateTo('realisasi-sanksi')" data-nav="realisasi-sanksi"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-solid fa-ellipsis text-[9px] text-gray-400"></i>
+              <span>Realisasi Sanksi</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3C. RIWAYAT NOTIFIKASI (Right below SANKSI) -->
+        <div>
+          <button onclick="navigateTo('riwayat-notifikasi')" data-nav="riwayat-notifikasi"
+            class="nav-item w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-bell text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">RIWAYAT NOTIFIKASI</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- 4. MASTER (Expandable) -->
+        <div>
+          <button onclick="toggleMenu('menu-master')" id="btn-menu-master"
+            class="menu-parent w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-book text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">MASTER</span>
+            </span>
+            <i id="arrow-menu-master" class="fa-solid fa-chevron-right text-[9px] text-gray-400 transition-transform duration-200"></i>
+          </button>
+          <div id="menu-master" class="hidden pl-4 pr-1 py-1 space-y-1">
+            <button onclick="navigateTo('master-regulasi')" data-nav="master-regulasi"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Regulasi</span>
+            </button>
+            <button onclick="navigateTo('master-regulator')" data-nav="master-regulator"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Regulator</span>
+            </button>
+            <button onclick="navigateTo('master-divisi-email')" data-nav="master-divisi-email"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Divisi Email</span>
+            </button>
+            <button onclick="navigateTo('master-user')" data-nav="master-user"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master User</span>
+            </button>
+            <button onclick="navigateTo('master-sanksi')" data-nav="master-sanksi"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Sanksi</span>
+            </button>
+            <button onclick="navigateTo('master-pelapor')" data-nav="master-pelapor"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Pelapor</span>
+            </button>
+            <button onclick="navigateTo('master-reporting-owner')" data-nav="master-reporting-owner"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Reporting Owner</span>
+            </button>
+            <button onclick="navigateTo('master-tujuan-pelaporan')" data-nav="master-tujuan-pelaporan"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Tujuan Pelaporan</span>
+            </button>
+            <button onclick="navigateTo('master-jenis-regulasi')" data-nav="master-jenis-regulasi"
+              class="nav-subitem w-full flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-gray-50 text-left text-[11px] text-gray-500">
+              <i class="fa-regular fa-file-lines text-[10px] text-gray-400"></i>
+              <span>Master Jenis Regulasi</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 5. FAQ -->
+        <div>
+          <button onclick="navigateTo('faq')" data-nav="faq"
+            class="nav-item w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-question text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">FAQ</span>
+            </span>
+          </button>
+        </div>
+
+        <!-- 6. MANUAL BOOK -->
+        <div>
+          <button onclick="navigateTo('manual-book')" data-nav="manual-book"
+            class="nav-item w-full flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors text-left">
+            <span class="flex items-center gap-3">
+              <span class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 nav-icon">
+                <i class="fa-solid fa-book-open text-[11px]"></i>
+              </span>
+              <span class="tracking-wide uppercase nav-label">MANUAL BOOK</span>
+            </span>
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- RIGHT WORKSPACE (TOP NAVBAR + MARQUEE + MAIN CONTENT + FOOTER) -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- TOP ROYAL BLUE NAVBAR -->
+      <header class="h-[56px] bg-[#2557d6] text-white flex items-center justify-between px-4 shadow-sm shrink-0">
+        <div class="flex items-center gap-6 md:gap-16">
+          <button onclick="toggleSidebar()" title="Toggle Sidebar"
+            class="text-white/90 hover:text-white p-1.5 rounded focus:outline-none">
+            <i class="fa-solid fa-bars text-base"></i>
+          </button>
+          <h1 class="text-[13px] md:text-[14px] font-semibold tracking-wide uppercase">
+            SISTEM INFORMASI KEPATUHAN
+          </h1>
+        </div>
+
+        <!-- Right User Profile Avatar -->
+        <div class="relative">
+          <button onclick="toggleProfileMenu()" class="flex items-center gap-2 focus:outline-none">
+            <div class="w-8 h-8 rounded-full overflow-hidden border border-white/40 bg-emerald-700 flex items-center justify-center shadow-inner">
+              <!-- Landscape scenic avatar matching screenshot -->
+              <svg viewBox="0 0 36 36" class="w-full h-full">
+                <rect width="36" height="36" fill="#1e3a8a" />
+                <circle cx="24" cy="10" r="4" fill="#fde047" opacity="0.85" />
+                <path d="M0 24 Q10 16 18 22 T36 20 L36 36 L0 36 Z" fill="#15803d" />
+                <path d="M0 28 Q14 22 25 27 T36 25 L36 36 L0 36 Z" fill="#166534" />
+              </svg>
+            </div>
+          </button>
+          <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1.5 z-50 text-xs text-gray-700">
+            <div class="px-3.5 py-2 border-b border-gray-100">
+              <p class="font-semibold text-gray-800">Divisi Kepatuhan</p>
+              <p class="text-[11px] text-gray-500">compliance@pnm.co.id</p>
+            </div>
+            <button onclick="navigateTo('master-user'); toggleProfileMenu();" class="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2">
+              <i class="fa-solid fa-user-gear text-gray-400"></i> Manajemen User
+            </button>
+            <button onclick="showToast('Sesi aktif sebagai Administrator Kepatuhan', 'info'); toggleProfileMenu();" class="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-red-600">
+              <i class="fa-solid fa-right-from-bracket"></i> Keluar
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="flex-1 p-3.5 md:p-4 flex flex-col gap-3.5">
+
+        <!-- TOP MARQUEE / REMINDER TICKER CARD -->
+        <div class="bg-white rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 px-4 py-1.5 marquee-wrapper">
+          <div class="marquee-track text-[11.5px] font-medium">
+            <!-- Block 1 -->
+            <span class="inline-flex items-center">
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#0ea5e9] hover:underline font-semibold">2 Kewajiban jatuh tempo 60 - 90 hari</button>
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#2563eb] hover:underline font-semibold">6 Kewajiban jatuh tempo 30 - 59 hari</button>
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#f59e0b] hover:underline font-semibold">14 Kewajiban jatuh tempo &lt; 30 hari</button>
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#ef4444] hover:underline font-semibold">4 Kewajiban sudah jatuh tempo</button>
+              <span class="text-gray-400 mx-8">Reminder !! |</span>
+            </span>
+            <!-- Block 2 (Seamless Loop Duplicate) -->
+            <span class="inline-flex items-center">
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#0ea5e9] hover:underline font-semibold">2 Kewajiban jatuh tempo 60 - 90 hari</button>
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#2563eb] hover:underline font-semibold">6 Kewajiban jatuh tempo 30 - 59 hari</button>
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#f59e0b] hover:underline font-semibold">14 Kewajiban jatuh tempo &lt; 30 hari</button>
+              <span class="text-gray-400 mx-2">Reminder !! |</span>
+              <button onclick="navigateTo('pelaporan')" class="text-[#ef4444] hover:underline font-semibold">4 Kewajiban sudah jatuh tempo</button>
+              <span class="text-gray-400 mx-8">Reminder !! |</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- DYNAMIC PAGE CONTAINER -->
+        <div id="page-content" class="flex-1">
+          <!-- Rendered by JavaScript -->
+        </div>
+
+      </main>
+
+      <!-- FOOTER -->
+      <footer class="bg-white border-t border-gray-200 px-5 py-3 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 shrink-0">
+        <div>
+          Copyright &copy; 2022 | Email : <a href="mailto:compliance@pnm.co.id" class="hover:underline text-gray-600">compliance@pnm.co.id</a>
+        </div>
+        <div class="mt-1 sm:mt-0">
+          Version 1.1
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- MODAL FOR ADD / EDIT USER -->
+  <div id="user-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-lg overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between">
+        <h3 id="user-modal-title" class="text-sm font-semibold text-gray-700">Tambahkan User</h3>
+        <button onclick="closeUserModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="user-form" onsubmit="saveUserForm(event)" class="p-5 space-y-3 text-xs">
+        <input type="hidden" id="edit-user-id" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Nama Lengkap *</label>
+            <input type="text" id="user-nama" required class="sipatuh-input" placeholder="Contoh: Budi Santoso" />
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Inisial *</label>
+            <input type="text" id="user-inisial" required maxlength="4" class="sipatuh-input uppercase" placeholder="Contoh: BSO" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Divisi *</label>
+            <input type="text" id="user-divisi" required class="sipatuh-input" placeholder="Divisi Kepatuhan" />
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Jabatan *</label>
+            <input type="text" id="user-jabatan" required class="sipatuh-input" placeholder="Officer / Kepala Bagian" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Role *</label>
+            <select id="user-role" class="sipatuh-input">
+              <option value="Administrator IT">Administrator IT</option>
+              <option value="Supervisor Pelapor">Supervisor Pelapor</option>
+              <option value="Admin Pelapor">Admin Pelapor</option>
+              <option value="Compliance Officer">Compliance Officer</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Email *</label>
+            <input type="email" id="user-email" required class="sipatuh-input" placeholder="nama@pnm.co.id" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Nomor Handphone *</label>
+            <input type="text" id="user-hp1" required class="sipatuh-input" placeholder="6281234567890" />
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Nomor Handphone Kedua</label>
+            <input type="text" id="user-hp2" class="sipatuh-input" placeholder="6281234567890" />
+          </div>
+        </div>
+        <div class="pt-3 border-t border-gray-100 flex justify-end gap-2">
+          <button type="button" onclick="closeUserModal()" class="px-4 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded bg-[#0d9488] hover:bg-[#0f766e] text-white font-medium">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL FOR VIEW SIMAK / REGULATION PREVIEW -->
+  <div id="simak-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-2xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="text-sm font-semibold text-gray-700">SIMAK - Sistem Informasi Manajemen Aturan & Kepatuhan</h3>
+        <button onclick="closeSimakModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-5 text-xs text-gray-600 space-y-3 max-h-[65vh] overflow-y-auto">
+        <p class="text-gray-500">Pilih dokumen regulasi dari repositori SIMAK untuk ditautkan ke form:</p>
+        <div class="divide-y divide-gray-200 border border-gray-200 rounded">
+          <div class="p-3 flex items-center justify-between hover:bg-blue-50/50">
+            <div>
+              <p class="font-semibold text-gray-800">Peraturan Menteri Keuangan Nomor 81 Tahun 2024</p>
+              <p class="text-[11px] text-gray-500">Ketentuan Perpajakan dalam Rangka Pelaksanaan Sistem Inti Administrasi Perpajakan</p>
+            </div>
+            <button onclick="selectSimakDoc('PMK_81_Tahun_2024.pdf')" class="px-3 py-1 bg-[#2557d6] text-white rounded text-[11px] hover:bg-blue-700">Pilih</button>
+          </div>
+          <div class="p-3 flex items-center justify-between hover:bg-blue-50/50">
+            <div>
+              <p class="font-semibold text-gray-800">POJK Nomor 11 /POJK.03/2022</p>
+              <p class="text-[11px] text-gray-500">Penyelenggaraan Teknologi Informasi oleh Bank Umum & Lembaga Jasa Keuangan</p>
+            </div>
+            <button onclick="selectSimakDoc('POJK_11_2022_TI.pdf')" class="px-3 py-1 bg-[#2557d6] text-white rounded text-[11px] hover:bg-blue-700">Pilih</button>
+          </div>
+          <div class="p-3 flex items-center justify-between hover:bg-blue-50/50">
+            <div>
+              <p class="font-semibold text-gray-800">SEOJK Nomor 18 /SEOJK.05/2023</p>
+              <p class="text-[11px] text-gray-500">Laporan Berkala Lembaga Pembiayaan dan Lembaga Keuangan Mikro</p>
+            </div>
+            <button onclick="selectSimakDoc('SEOJK_18_2023_Laporan.pdf')" class="px-3 py-1 bg-[#2557d6] text-white rounded text-[11px] hover:bg-blue-700">Pilih</button>
+          </div>
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-gray-200 flex justify-end">
+        <button onclick="closeSimakModal()" class="px-4 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-medium">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL FOR APPROVAL SANKSI -->
+  <div id="approval-sanksi-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-lg overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="text-sm font-semibold text-gray-700">Approval Data Sanksi</h3>
+        <button onclick="closeApprovalSanksiModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="approval-sanksi-form" onsubmit="submitApprovalSanksi(event)" class="p-5 space-y-3.5 text-xs">
+        <input type="hidden" id="appr-sanksi-id" />
+        <div class="bg-blue-50/70 border border-blue-100 rounded p-3 space-y-1 text-[11.5px]">
+          <p class="text-gray-500">Nomor Surat Regulator: <span id="appr-sanksi-nomor" class="font-semibold text-gray-800"></span></p>
+          <p class="text-gray-500">Perihal: <span id="appr-sanksi-perihal" class="font-medium text-gray-700"></span></p>
+          <p class="text-gray-500">Jenis & Nominal: <span id="appr-sanksi-jenis" class="font-semibold text-red-600"></span></p>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Keputusan Approval *</label>
+          <select id="appr-sanksi-decision" required class="sipatuh-input">
+            <option value="Approved">Approve (Lanjut ke Realisasi Sanksi)</option>
+            <option value="Rejected">Reject / Kembalikan untuk Perbaikan</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Catatan Approval</label>
+          <textarea id="appr-sanksi-catatan" rows="3" class="sipatuh-input" placeholder="Masukkan catatan verifikasi atau instruksi tindak lanjut..."></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-gray-100 flex justify-end gap-2">
+          <button type="button" onclick="closeApprovalSanksiModal()" class="px-4 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded bg-[#00a680] hover:bg-[#008f6e] text-white font-medium">Simpan Keputusan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL FOR UPDATE REALISASI SANKSI -->
+  <div id="realisasi-sanksi-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-lg overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="text-sm font-semibold text-gray-700">Input Realisasi Tindak Lanjut Sanksi</h3>
+        <button onclick="closeRealisasiSanksiModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="realisasi-sanksi-form" onsubmit="submitRealisasiSanksi(event)" class="p-5 space-y-3.5 text-xs">
+        <input type="hidden" id="real-sanksi-id" />
+        <div class="bg-gray-50 border border-gray-200 rounded p-3 text-[11.5px]">
+          <p class="text-gray-500">Nomor Surat: <span id="real-sanksi-nomor" class="font-semibold text-gray-800"></span></p>
+          <p class="text-gray-500 mt-0.5">Perihal: <span id="real-sanksi-perihal" class="text-gray-700"></span></p>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Tanggal Realisasi / Pembayaran *</label>
+          <input type="date" id="real-sanksi-tanggal" required class="sipatuh-input" />
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Status Realisasi *</label>
+          <select id="real-sanksi-status" required class="sipatuh-input">
+            <option value="Selesai / Sudah Dibayar">Selesai / Sudah Dibayar</option>
+            <option value="Dalam Proses Tindak Lanjut">Dalam Proses Tindak Lanjut</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Bukti Realisasi / Pembayaran (PDF/JPG)</label>
+          <input type="file" id="real-sanksi-file" accept=".pdf,.jpg,.jpeg,.png" class="sipatuh-input text-[11px]" />
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Keterangan Realisasi</label>
+          <textarea id="real-sanksi-ket" rows="2" class="sipatuh-input" placeholder="Nomor NTPN / referensi pembayaran atau keterangan penyelesaian..."></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-gray-100 flex justify-end gap-2">
+          <button type="button" onclick="closeRealisasiSanksiModal()" class="px-4 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded bg-[#2563eb] hover:bg-blue-700 text-white font-medium">Simpan Realisasi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL FOR KIRIM BLAST NOTIFIKASI MANUAL -->
+  <div id="blast-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-lg overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="text-sm font-semibold text-gray-700">Kirim Notifikasi Blast (Email &amp; WA)</h3>
+        <button onclick="closeBlastModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="blast-form" onsubmit="submitBlastNotifikasi(event)" class="p-5 space-y-3.5 text-xs">
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Channel Pengiriman *</label>
+          <select id="blast-channel" required class="sipatuh-input">
+            <option value="Email & WA Blast">Email &amp; WA Blast (Keduanya)</option>
+            <option value="Email Blast">Email Blast Saja</option>
+            <option value="WA Blast">WA Blast Saja</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Kategori Pengingat *</label>
+          <select id="blast-kategori" required class="sipatuh-input">
+            <option value="Reminder Jatuh Tempo < 30 Hari">Reminder Jatuh Tempo &lt; 30 Hari</option>
+            <option value="Reminder Jatuh Tempo 30 - 59 Hari">Reminder Jatuh Tempo 30 - 59 Hari</option>
+            <option value="Reminder Jatuh Tempo 60 - 90 Hari">Reminder Jatuh Tempo 60 - 90 Hari</option>
+            <option value="Peringatan Kewajiban Sudah Jatuh Tempo">Peringatan Kewajiban Sudah Jatuh Tempo</option>
+            <option value="Notifikasi Sanksi Regulator">Notifikasi Sanksi Regulator</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Divisi Tujuan *</label>
+          <select id="blast-divisi" required class="sipatuh-input">
+            <option value="Divisi Akuntansi Manajemen dan Keuangan">Divisi Akuntansi Manajemen dan Keuangan</option>
+            <option value="Divisi Manajemen Risiko Operasional dan Korporasi">Divisi Manajemen Risiko Operasional dan Korporasi</option>
+            <option value="Corporate Secretary">Corporate Secretary</option>
+            <option value="Divisi Kepatuhan">Divisi Kepatuhan</option>
+            <option value="Divisi Legal">Divisi Legal</option>
+            <option value="Divisi Tresuri dan Pendanaan">Divisi Tresuri dan Pendanaan</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Subjek / Judul Pesan *</label>
+          <input type="text" id="blast-subjek" required class="sipatuh-input" placeholder="Contoh: [REMINDER SIPATUH] Jatuh Tempo Laporan Bulanan" />
+        </div>
+
+        <div>
+          <label class="block text-gray-600 font-medium mb-1">Isi Pesan Blast *</label>
+          <textarea id="blast-pesan" rows="3" required class="sipatuh-input" placeholder="Yth. Bapak/Ibu PIC Pelapor, mohon segera menyampaikan laporan kewajiban sebelum tanggal jatuh tempo..."></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-gray-100 flex justify-end gap-2">
+          <button type="button" onclick="closeBlastModal()" class="px-4 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded bg-[#00a680] hover:bg-[#008f6e] text-white font-medium flex items-center gap-1.5">
+            <i class="fa-solid fa-paper-plane text-[10px]"></i>
+            <span>Kirim Blast</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL FOR DETAIL PESAN NOTIFIKASI -->
+  <div id="notif-detail-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-lg overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 class="text-sm font-semibold text-gray-700">Detail Isi Pesan Notifikasi Blast</h3>
+        <button onclick="closeNotifDetailModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="notif-detail-body" class="p-5 space-y-3 text-xs text-gray-600"></div>
+      <div class="px-5 py-3 border-t border-gray-200 flex justify-end">
+        <button onclick="closeNotifDetailModal()" class="px-4 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-medium">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // STATE & DATA MASTER SIPATUH
+    // =========================================================================
+    let currentRoute = 'dashboard-monitoring';
+
+    // Chart Data for Dashboard Monitoring (exact values from screenshot)
+    const chartDivisions = [
+      { code: 'COS', target: 55, realisasi: 54 },
+      { code: 'MRE', target: 0, realisasi: 0 },
+      { code: 'PKT', target: 11, realisasi: 10 },
+      { code: 'STR', target: 0, realisasi: 0 },
+      { code: 'LGL', target: 0, realisasi: 0 },
+      { code: 'PWS', target: 0, realisasi: 0 },
+      { code: 'AMK', target: 246, realisasi: 230 },
+      { code: 'TRP', target: 41, realisasi: 34 },
+      { code: 'KPH', target: 33, realisasi: 31 },
+      { code: 'HCS', target: 2, realisasi: 2 },
+      { code: 'RSP', target: 29, realisasi: 27 },
+      { code: 'JMN', target: 23, realisasi: 23 },
+      { code: 'OPR', target: 59, realisasi: 57 },
+      { code: 'PPI', target: 0, realisasi: 0 },
+      { code: 'HBL', target: 0, realisasi: 0 },
+      { code: 'HCD', target: 0, realisasi: 0 },
+      { code: 'CRO', target: 0, realisasi: 0 },
+      { code: 'PUS', target: 0, realisasi: 0 },
+      { code: 'JRN', target: 8, realisasi: 7 },
+      { code: 'MRO', target: 13, realisasi: 12 },
+      { code: 'PKA', target: 3, realisasi: 3 },
+      { code: 'AOV', target: 3, realisasi: 3 },
+      { code: 'MRO', target: 13, realisasi: 12 },
+      { code: 'ATI', target: 0, realisasi: 0 },
+      { code: 'EIM', target: 0, realisasi: 0 }
+    ];
+
+    // Realisasi Pelaporan Data (matching screenshot 3)
+    let pelaporanList = [
+      {
+        no: 1,
+        regulasi: 'Peraturan Menteri Keuangan Nomor 81 Tahun 2024',
+        tujuan: 'KEMENKEU',
+        kewajiban: 'Pembayaran dan Penyetoran Pajak Pertambahan Nilai yang terutang atas pemanfaatan Barang Kena Pajak tidak berwujud dan/atau Jasa Kena Pajak dari luar Daerah Pabean bulan Oktober 2026',
+        sanksi: 'Sanksi Administratif',
+        owner: 'Divisi Akuntansi Manajemen dan Keuangan',
+        pelapor: 'Divisi Akuntansi Manajemen dan Keuangan',
+        periode: 'Bulanan',
+        ketPeriode: '',
+        tglJatuhTempo: '15 Nov 2026',
+        hitungWaktu: 'Done',
+        statusRealisasi: 'Approve Realisasi Supervisor',
+        statusLapor: 'SUDAH LAPOR',
+        catatan: '',
+        tglRealisasi: '2026-11-12',
+        tahun: '2026'
+      },
+      {
+        no: 2,
+        regulasi: 'Peraturan Menteri Keuangan Nomor 81 Tahun 2024',
+        tujuan: 'KEMENKEU',
+        kewajiban: 'Pembayaran dan Penyetoran Pajak Pertambahan Nilai yang terutang atas pemanfaatan Barang Kena Pajak tidak berwujud dan/atau Jasa Kena Pajak dari luar Daerah Pabean bulan September 2026',
+        sanksi: 'Sanksi Administratif',
+        owner: 'Divisi Akuntansi Manajemen dan Keuangan',
+        pelapor: 'Divisi Akuntansi Manajemen dan Keuangan',
+        periode: 'Bulanan',
+        ketPeriode: '',
+        tglJatuhTempo: '15 Oct 2026',
+        hitungWaktu: 'Done',
+        statusRealisasi: 'Approve Realisasi Supervisor',
+        statusLapor: 'SUDAH LAPOR',
+        catatan: '',
+        tglRealisasi: '2026-10-13',
+        tahun: '2026'
+      },
+      {
+        no: 3,
+        regulasi: '',
+        tujuan: '',
+        kewajiban: 'Laporan Fraud Berdampak Signifikan',
+        sanksi: 'Sanksi Administratif',
+        owner: 'Divisi Manajemen Risiko Operasional dan Korporasi',
+        pelapor: 'Divisi Manajemen Risiko Operasional dan Korporasi',
+        periode: 'Insidentil',
+        ketPeriode: '',
+        tglJatuhTempo: '24 Aug 2026',
+        hitungWaktu: 'Done',
+        statusRealisasi: 'Approve Realisasi Supervisor',
+        statusLapor: 'SUDAH LAPOR',
+        catatan: '',
+        tglRealisasi: '2026-08-22',
+        tahun: '2026'
+      },
+      {
+        no: 4,
+        regulasi: '',
+        tujuan: '',
+        kewajiban: 'Laporan Pembukaan, Penutupan, Perubahan alamat Kantor Pusat dan/atau kantor selain Kantor Pusat',
+        sanksi: 'Sanksi Administratif',
+        owner: 'Corporate Secretary',
+        pelapor: 'Corporate Secretary',
+        periode: 'Insidentil',
+        ketPeriode: '',
+        tglJatuhTempo: '07 Sep 2026',
+        hitungWaktu: 'Done',
+        statusRealisasi: 'Approve Realisasi Supervisor',
+        statusLapor: 'SUDAH LAPOR',
+        catatan: '',
+        tglRealisasi: '2026-09-05',
+        tahun: '2026'
+      },
+      {
+        no: 5,
+        regulasi: '',
+        tujuan: '',
+        kewajiban: 'Laporan Keterbukaan Informasi',
+        sanksi: 'Sanksi Administratif',
+        owner: 'Corporate Secretary',
+        pelapor: 'Corporate Secretary',
+        periode: 'Insidentil',
+        ketPeriode: '',
+        tglJatuhTempo: '23 Jul 2026',
+        hitungWaktu: 'Done',
+        statusRealisasi: 'Approve Realisasi Supervisor',
+        statusLapor: 'SUDAH LAPOR',
+        catatan: '',
+        tglRealisasi: '2026-07-21',
+        tahun: '2026'
+      },
+      {
+        no: 6,
+        regulasi: '',
+        tujuan: '',
+        kewajiban: 'Laporan Pembukaan, Penutupan, Perubahan alamat Kantor Pusat dan/atau kantor selain Kantor Pusat',
+        sanksi: 'Sanksi Administratif',
+        owner: 'Corporate Secretary',
+        pelapor: 'Corporate Secretary',
+        periode: 'Insidentil',
+        ketPeriode: '',
+        tglJatuhTempo: '18 Jun 2026',
+        hitungWaktu: 'Done',
+        statusRealisasi: 'Approve Realisasi Supervisor',
+        statusLapor: 'SUDAH LAPOR',
+        catatan: '',
+        tglRealisasi: '2026-06-15',
+        tahun: '2026'
+      }
+    ];
+
+    // Master User Data (matching screenshot 4 + additional entries for 155 total pagination)
+    const initialUsers = [
+      { id: 1, nama: 'Abelia Putri Aisyah', divisi: 'Divisi Strategi dan Perencanaan Teknologi Informasi', inisial: 'BEL', jabatan: 'Staf', role: 'Administrator IT', hp1: '81311777004', hp2: '6281311777004', email: 'apaisyah0504@pnm.co.id' },
+      { id: 2, nama: 'Adhi Prasetyo Bondoarto', divisi: 'Divisi Akuntansi Manajemen dan Keuangan', inisial: 'APB', jabatan: 'Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '6281297774473', hp2: '6281297774473', email: 'adhi_pb@pnm.co.id' },
+      { id: 3, nama: 'Adi Nugraha', divisi: 'Divisi Akuntansi Manajemen dan Keuangan', inisial: 'GNU', jabatan: 'Kepala Divisi', role: 'Supervisor Pelapor', hp1: '62', hp2: '6281321210642', email: 'anugraha1225@pnm.co.id' },
+      { id: 4, nama: 'Adri Arasyarif Utomo', divisi: 'Divisi Legal', inisial: 'AUT', jabatan: 'Officer', role: 'Admin Pelapor', hp1: '6282110100255', hp2: '6282110100255', email: 'automo1204@pnm.co.id' },
+      { id: 5, nama: 'Agung Pribowo', divisi: 'Divisi Audit Operasional dan Investigasi', inisial: 'PBW', jabatan: 'Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '628111111412', hp2: '628111111412', email: 'apribowo0322@pnm.co.id' },
+      { id: 6, nama: 'Agus Setiawan', divisi: 'Divisi Enterprise Information Management', inisial: 'GST', jabatan: 'Plt. Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '6285289898933', hp2: '6285289898933', email: 'asetiawan0811@pnm.co.id' },
+      { id: 7, nama: 'Ahmad Aji Noviansyah', divisi: 'Divisi Rencana Strategi Perusahaan', inisial: 'NIV', jabatan: 'Kepala Bagian', role: 'Supervisor Pelapor', hp1: '6281381087181', hp2: '6281212858347', email: 'aanoviansyah1116@pnm.co.id' },
+      { id: 8, nama: 'Ahmad Rifkie', divisi: 'Divisi Tresuri dan Pendanaan', inisial: 'ARK', jabatan: 'Kepala Bagian', role: 'Supervisor Pelapor', hp1: '6285773883175', hp2: '6285773883175', email: 'ahmad_r@pnm.co.id' },
+      { id: 9, nama: 'Ahmad Suhaemi', divisi: 'Divisi Kepatuhan', inisial: 'AHA', jabatan: 'Wakil Kepala Divisi', role: 'Administrator IT', hp1: '6281381087181', hp2: '6281381087181', email: 'ahmad_aha@pnm.co.id' },
+      { id: 10, nama: 'Aisha Diva Sedona Yuwani', divisi: 'Divisi Human Capital Strategic & Development', inisial: 'AVY', jabatan: 'Staf', role: 'Admin Pelapor', hp1: '628111209459', hp2: '628111209459', email: 'adsyuwani0525@pnm.co.id' }
+    ];
+
+    const sampleDivisions = [
+      'Divisi Kepatuhan',
+      'Divisi Akuntansi Manajemen dan Keuangan',
+      'Divisi Manajemen Risiko Operasional dan Korporasi',
+      'Corporate Secretary',
+      'Divisi Legal',
+      'Divisi Tresuri dan Pendanaan',
+      'Divisi Teknologi Informasi'
+    ];
+    const sampleRoles = ['Supervisor Pelapor', 'Admin Pelapor', 'Administrator IT'];
+    const sampleJabatans = ['Staf', 'Officer', 'Kepala Bagian', 'Wakil Kepala Divisi'];
+
+    let masterUsersList = [...initialUsers];
+    for (let i = 11; i <= 155; i++) {
+      const code = String(i).padStart(3, '0');
+      masterUsersList.push({
+        id: i,
+        nama: `Pegawai PNM ${code}`,
+        divisi: sampleDivisions[i % sampleDivisions.length],
+        inisial: `P${String.fromCharCode(65 + (i % 26))}${i % 10}`,
+        jabatan: sampleJabatans[i % sampleJabatans.length],
+        role: sampleRoles[i % sampleRoles.length],
+        hp1: `62812${1000000 + i * 37}`,
+        hp2: `62812${1000000 + i * 37}`,
+        email: `user${code}@pnm.co.id`
+      });
+    }
+
+    // Master Regulasi List (updated dynamically when Add Data Regulasi is submitted)
+    let masterRegulasiList = [
+      {
+        id: 1,
+        regulasi: 'Peraturan Menteri Keuangan Nomor 81 Tahun 2024',
+        perihal: 'Ketentuan Perpajakan dalam Rangka Pelaksanaan Sistem Inti Administrasi Perpajakan',
+        tanggalTerbit: '14/10/2024',
+        regulator: 'KEMENKEU',
+        jenis: 'Peraturan Menteri',
+        ruangLingkup: 'Perpajakan & Akuntansi Perusahaan',
+        status: 'Berlaku',
+        keterangan: 'Berlaku efektif mulai masa pajak Januari 2025',
+        attachment: 'PMK_81_Tahun_2024.pdf'
+      },
+      {
+        id: 2,
+        regulasi: 'POJK Nomor 18 /POJK.03/2016',
+        perihal: 'Penerapan Manajemen Risiko bagi Bank Umum dan Lembaga Jasa Keuangan',
+        tanggalTerbit: '16/03/2016',
+        regulator: 'OJK',
+        jenis: 'POJK',
+        ruangLingkup: 'Manajemen Risiko Korporasi',
+        status: 'Berlaku',
+        keterangan: 'Pelaporan profil risiko semesteran',
+        attachment: 'POJK_18_2016.pdf'
+      }
+    ];
+
+    // Master Sanksi List (updated dynamically when Add Data Sanksi is submitted)
+    // Flow: Add Data Sanksi (statusApproval: 'Pending Approval') -> Report Sanksi (Approval) -> Realisasi Sanksi (statusApproval: 'Approved')
+    let masterSanksiList = [
+      {
+        id: 1,
+        nomorSurat: 'S-142/NB.22/2026',
+        tanggalSurat: '10/11/2026',
+        perihal: 'Sanksi Denda Keterlambatan Penyampaian Laporan Bulanan',
+        tujuanPelaporan: 'OJK',
+        reporterOwner: 'Divisi Akuntansi Manajemen dan Keuangan',
+        jenisSanksi: 'Denda Administratif',
+        nominalDenda: '50.000.000',
+        tanggalJatuhTempo: '25/11/2026',
+        regulasi: 'POJK Nomor 18 /POJK.03/2016',
+        keterangan: 'Pembayaran denda melalui sistem SIPENA OJK sebelum tanggal jatuh tempo',
+        fileSurat: 'Surat_Sanksi_OJK_142_2026.pdf',
+        statusApproval: 'Pending Approval',
+        catatanApproval: '',
+        tanggalApproval: '-',
+        statusRealisasi: 'Belum Realisasi',
+        tanggalRealisasi: '-',
+        buktiRealisasi: '',
+        keteranganRealisasi: ''
+      },
+      {
+        id: 2,
+        nomorSurat: 'SR-089/KMK.03/2026',
+        tanggalSurat: '02/10/2026',
+        perihal: 'Peringatan Tertulis Pelaporan Pajak Masa September 2026',
+        tujuanPelaporan: 'KEMENKEU',
+        reporterOwner: 'Divisi Kepatuhan',
+        jenisSanksi: 'Peringatan Tertulis',
+        nominalDenda: '-',
+        tanggalJatuhTempo: '16/10/2026',
+        regulasi: 'Peraturan Menteri Keuangan Nomor 81 Tahun 2024',
+        keterangan: 'Tindak lanjut klarifikasi pelaporan kepada KPP Wajib Pajak Besar',
+        fileSurat: 'Surat_Peringatan_Kemenkeu_089.pdf',
+        statusApproval: 'Approved',
+        catatanApproval: 'Disetujui untuk segera ditindaklanjuti divisi terkait',
+        tanggalApproval: '04/10/2026',
+        statusRealisasi: 'Selesai / Sudah Dibayar',
+        tanggalRealisasi: '12/10/2026',
+        buktiRealisasi: 'Bukti_TindakLanjut_Kemenkeu_089.pdf',
+        keteranganRealisasi: 'Surat tanggapan & klarifikasi telah disampaikan ke KPP'
+      }
+    ];
+
+    // Riwayat Notifikasi Blast List (Email Blast & WA Blast)
+    let riwayatNotifikasiList = [
+      {
+        id: 1,
+        waktuKirim: '16/11/2026 08:00:12',
+        channel: 'Email Blast',
+        kategori: 'Reminder Jatuh Tempo < 30 Hari',
+        penerima: 'Adhi Prasetyo Bondoarto (adhi_pb@pnm.co.id)',
+        divisi: 'Divisi Akuntansi Manajemen dan Keuangan',
+        subjek: '[REMINDER SIPATUH] Kewajiban Pelaporan PPN Jasa Luar Negeri - Jatuh Tempo 15 Nov 2026',
+        isiPesan: 'Yth. Bapak/Ibu Adhi Prasetyo Bondoarto, diingatkan bahwa kewajiban Pembayaran dan Penyetoran PPN atas pemanfaatan BKP tidak berwujud dari luar Daerah Pabean akan segera jatuh tempo. Mohon segera unggah bukti lapor pada aplikasi SIPATUH.',
+        status: 'Terkirim'
+      },
+      {
+        id: 2,
+        waktuKirim: '16/11/2026 08:00:15',
+        channel: 'WA Blast',
+        kategori: 'Reminder Jatuh Tempo < 30 Hari',
+        penerima: 'Adhi Prasetyo Bondoarto (6281297774473)',
+        divisi: 'Divisi Akuntansi Manajemen dan Keuangan',
+        subjek: 'WA Reminder Kewajiban Pelaporan Bulanan AMK',
+        isiPesan: '*[SIPATUH PNM - REMINDER]* Yth. Bapak/Ibu Adhi Prasetyo Bondoarto (Divisi AMK), terdapat kewajiban pelaporan ke KEMENKEU yang jatuh tempo dalam < 30 hari. Silakan akses kepatuhan.pnm.co.id untuk melakukan realisasi.',
+        status: 'Terkirim'
+      },
+      {
+        id: 3,
+        waktuKirim: '15/11/2026 09:15:40',
+        channel: 'Email Blast',
+        kategori: 'Notifikasi Sanksi Regulator',
+        penerima: 'Adi Nugraha (anugraha1225@pnm.co.id)',
+        divisi: 'Divisi Akuntansi Manajemen dan Keuangan',
+        subjek: '[ALERT SANKSI] Surat Regulator S-142/NB.22/2026 - Denda Administratif',
+        isiPesan: 'Yth. Kepala Divisi AMK, telah diinput data sanksi baru dengan Nomor Surat S-142/NB.22/2026 perihal Sanksi Denda Keterlambatan Penyampaian Laporan Bulanan (Jatuh Tempo: 25/11/2026). Mohon segera dilakukan tindak lanjut.',
+        status: 'Terkirim'
+      },
+      {
+        id: 4,
+        waktuKirim: '15/11/2026 09:15:44',
+        channel: 'WA Blast',
+        kategori: 'Notifikasi Sanksi Regulator',
+        penerima: 'Adi Nugraha (6281321210642)',
+        divisi: 'Divisi Akuntansi Manajemen dan Keuangan',
+        subjek: 'WA Alert Sanksi Regulator S-142/NB.22/2026',
+        isiPesan: '*[SIPATUH PNM - NOTIFIKASI SANKSI]* Yth. Bapak Adi Nugraha, terdapat surat sanksi regulator nomor *S-142/NB.22/2026* jenis *Denda Administratif* sebesar Rp 50.000.000 dengan jatuh tempo *25/11/2026*.',
+        status: 'Terkirim'
+      },
+      {
+        id: 5,
+        waktuKirim: '14/11/2026 08:00:05',
+        channel: 'Email Blast',
+        kategori: 'Reminder Jatuh Tempo 30 - 59 Hari',
+        penerima: 'Ahmad Suhaemi (ahmad_aha@pnm.co.id)',
+        divisi: 'Divisi Kepatuhan',
+        subjek: '[REMINDER SIPATUH] 6 Kewajiban Jatuh Tempo 30 - 59 Hari',
+        isiPesan: 'Yth. Bapak Ahmad Suhaemi, terdapat 6 kewajiban pelaporan yang akan jatuh tempo dalam kurun waktu 30 - 59 hari ke depan. Mohon monitoring berkala melalui Dashboard SIPATUH.',
+        status: 'Terkirim'
+      },
+      {
+        id: 6,
+        waktuKirim: '13/11/2026 10:30:19',
+        channel: 'WA Blast',
+        kategori: 'Peringatan Kewajiban Sudah Jatuh Tempo',
+        penerima: 'Adri Arasyarif Utomo (6282110100255)',
+        divisi: 'Divisi Legal',
+        subjek: 'WA Peringatan Kewajiban Jatuh Tempo',
+        isiPesan: '*[SIPATUH PNM - OVERDUE ALERT]* Yth. Adri Arasyarif Utomo (Divisi Legal), terdapat kewajiban pelaporan yang telah melewati batas tanggal jatuh tempo. Mohon segera lakukan pembaruan status realisasi.',
+        status: 'Gagal'
+      }
+    ];
+
+    // =========================================================================
+    // NAVIGATION & UI CONTROLS
+    // =========================================================================
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-red-600 text-white',
+        info: 'bg-[#2557d6] text-white'
+      };
+      toast.className = `${bgColors[type] || bgColors.success} px-4 py-2.5 rounded shadow-lg text-xs font-medium flex items-center gap-2 pointer-events-auto transition-all duration-300`;
+      toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check'}"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobile-backdrop');
+      if (!sidebar) return;
+      sidebar.classList.toggle('collapsed');
+      if (window.innerWidth <= 768 && backdrop) {
+        if (sidebar.classList.contains('collapsed')) {
+          backdrop.classList.add('hidden');
+        } else {
+          backdrop.classList.remove('hidden');
+        }
+      }
+    }
+
+    function toggleProfileMenu() {
+      const dd = document.getElementById('profile-dropdown');
+      if (dd) dd.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const profileDropdown = document.getElementById('profile-dropdown');
+      if (profileDropdown && !e.target.closest('#profile-dropdown') && !e.target.closest('button[onclick="toggleProfileMenu()"]')) {
+        profileDropdown.classList.add('hidden');
+      }
+      if (!e.target.closest('.action-dropdown-wrapper')) {
+        document.querySelectorAll('.action-dropdown-menu').forEach(m => m.classList.add('hidden'));
+      }
+    });
+
+    function toggleMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      const arrow = document.getElementById('arrow-' + menuId);
+      if (!menu) return;
+      const isHidden = menu.classList.contains('hidden');
+      if (isHidden) {
+        menu.classList.remove('hidden');
+        if (arrow) arrow.style.transform = 'rotate(90deg)';
+      } else {
+        menu.classList.add('hidden');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    function openMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      const arrow = document.getElementById('arrow-' + menuId);
+      if (menu && menu.classList.contains('hidden')) {
+        menu.classList.remove('hidden');
+        if (arrow) arrow.style.transform = 'rotate(90deg)';
+      }
+    }
+
+    function updateSidebarActiveState(route) {
+      document.querySelectorAll('.nav-item, .nav-subitem').forEach(el => {
+        el.classList.remove('text-gray-900', 'font-semibold', 'bg-blue-50/60');
+        const iconWrap = el.querySelector('.nav-icon');
+        if (iconWrap) {
+          iconWrap.classList.remove('bg-[#2557d6]', 'text-white');
+          iconWrap.classList.add('bg-gray-100', 'text-gray-500');
+        }
+      });
+
+      document.querySelectorAll('.menu-parent').forEach(el => {
+        el.classList.remove('text-gray-900', 'font-semibold');
+        const iconWrap = el.querySelector('.nav-icon');
+        if (iconWrap) {
+          iconWrap.classList.remove('bg-[#2557d6]', 'text-white');
+          iconWrap.classList.add('bg-gray-100', 'text-gray-500');
+        }
+      });
+
+      const activeBtn = document.querySelector(`[data-nav="${route}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('text-gray-900', 'font-semibold');
+        const iconWrap = activeBtn.querySelector('.nav-icon');
+        if (iconWrap) {
+          iconWrap.classList.remove('bg-gray-100', 'text-gray-500');
+          iconWrap.classList.add('bg-[#2557d6]', 'text-white');
+        }
+      }
+
+      if (route.startsWith('add-data-')) {
+        openMenu('menu-add');
+        const p = document.getElementById('btn-menu-add');
+        if (p) {
+          p.classList.add('text-gray-900', 'font-semibold');
+          p.querySelector('.nav-icon').classList.replace('bg-gray-100', 'bg-[#2557d6]');
+          p.querySelector('.nav-icon').classList.replace('text-gray-500', 'text-white');
+        }
+      } else if (route === 'pelaporan' || route.startsWith('report-kewajiban') || route.startsWith('report-regulasi')) {
+        openMenu('menu-report');
+        const p = document.getElementById('btn-menu-report');
+        if (p) {
+          p.classList.add('text-gray-900', 'font-semibold');
+          p.querySelector('.nav-icon').classList.replace('bg-gray-100', 'bg-[#2557d6]');
+          p.querySelector('.nav-icon').classList.replace('text-gray-500', 'text-white');
+        }
+      } else if (route === 'report-sanksi' || route === 'realisasi-sanksi') {
+        openMenu('menu-sanksi');
+        const p = document.getElementById('btn-menu-sanksi');
+        if (p) {
+          p.classList.add('text-gray-900', 'font-semibold');
+          p.querySelector('.nav-icon').classList.replace('bg-gray-100', 'bg-[#2557d6]');
+          p.querySelector('.nav-icon').classList.replace('text-gray-500', 'text-white');
+        }
+      } else if (route.startsWith('master-')) {
+        openMenu('menu-master');
+        const p = document.getElementById('btn-menu-master');
+        if (p) {
+          p.classList.add('text-gray-900', 'font-semibold');
+          p.querySelector('.nav-icon').classList.replace('bg-gray-100', 'bg-[#2557d6]');
+          p.querySelector('.nav-icon').classList.replace('text-gray-500', 'text-white');
+        }
+      }
+    }
+
+    function navigateTo(route) {
+      currentRoute = route;
+      try {
+        window.history.replaceState(null, '', '#' + route);
+      } catch (e) {}
+
+      updateSidebarActiveState(route);
+
+      if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('mobile-backdrop');
+        if (sidebar) sidebar.classList.add('collapsed');
+        if (backdrop) backdrop.classList.add('hidden');
+      }
+
+      const container = document.getElementById('page-content');
+      if (!container) return;
+
+      switch (route) {
+        case 'dashboard-monitoring':
+          renderDashboard(container);
+          break;
+        case 'add-data-regulasi':
+          renderAddRegulasi(container);
+          break;
+        case 'add-data-kewajiban':
+          renderAddKewajiban(container);
+          break;
+        case 'add-data-sanksi':
+          renderAddSanksi(container);
+          break;
+        case 'pelaporan':
+          renderRealisasiPelaporan(container);
+          break;
+        case 'report-kewajiban':
+          renderReportKewajiban(container);
+          break;
+        case 'report-regulasi-eksternal':
+          renderReportRegulasiEksternal(container);
+          break;
+        case 'report-sanksi':
+          renderReportSanksi(container);
+          break;
+        case 'realisasi-sanksi':
+          renderRealisasiSanksi(container);
+          break;
+        case 'riwayat-notifikasi':
+          renderRiwayatNotifikasi(container);
+          break;
+        case 'master-user':
+          renderMasterUser(container);
+          break;
+        case 'master-regulasi':
+          renderMasterRegulasi(container);
+          break;
+        case 'master-sanksi':
+          renderMasterSanksi(container);
+          break;
+        case 'master-regulator':
+        case 'master-divisi-email':
+        case 'master-pelapor':
+        case 'master-reporting-owner':
+        case 'master-tujuan-pelaporan':
+        case 'master-jenis-regulasi':
+          renderGenericMaster(container, route);
+          break;
+        case 'faq':
+          renderFaq(container);
+          break;
+        case 'manual-book':
+          renderManualBook(container);
+          break;
+        default:
+          renderDashboard(container);
+      }
+    }
+
+    // =========================================================================
+    // PAGE 1: DASHBOARD MONITORING (/dashboard-monitoring)
+    // =========================================================================
+    function renderDashboard(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-6">
+            Daftar Kewajiban dan Realisasi
+          </h2>
+
+          <!-- Grouped Bar Chart Container -->
+          <div class="w-full overflow-x-auto pb-2">
+            <div id="dashboard-chart-wrap" class="min-w-[960px] w-full">
+              ${buildDashboardChartSVG(chartDivisions)}
+            </div>
+          </div>
+
+          <!-- Bottom Filter Controls (matching screenshot exactly) -->
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <div class="relative">
+              <select id="dash-year-filter" onchange="filterDashboardChart()"
+                class="appearance-none bg-[#f3f4f6] hover:bg-gray-200/70 border border-gray-300 rounded px-3.5 py-1.5 pr-8 text-[12px] text-gray-600 focus:outline-none focus:border-[#2557d6] cursor-pointer">
+                <option value="all">Pilih tahun pelaporan</option>
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+              </select>
+              <i class="fa-solid fa-caret-down text-[10px] text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            </div>
+
+            <div class="relative">
+              <select id="dash-month-filter" onchange="filterDashboardChart()"
+                class="appearance-none bg-[#f3f4f6] hover:bg-gray-200/70 border border-gray-300 rounded px-3.5 py-1.5 pr-8 text-[12px] text-gray-600 focus:outline-none focus:border-[#2557d6] cursor-pointer">
+                <option value="all">Pilih Bulan pelaporan</option>
+                <option value="01">Januari</option>
+                <option value="02">Februari</option>
+                <option value="03">Maret</option>
+                <option value="04">April</option>
+                <option value="05">Mei</option>
+                <option value="06">Juni</option>
+                <option value="07">Juli</option>
+                <option value="08">Agustus</option>
+                <option value="09">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+              <i class="fa-solid fa-caret-down text-[10px] text-gray-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildDashboardChartSVG(data) {
+      const width = 1280;
+      const height = 430;
+      const padLeft = 45;
+      const padRight = 20;
+      const padTop = 44;
+      const padBottom = 34;
+      const plotWidth = width - padLeft - padRight;
+      const plotHeight = height - padTop - padBottom;
+      const maxY = 250;
+      const yTicks = [0, 50, 100, 150, 200, 250];
+
+      const groupCount = data.length;
+      const groupWidth = plotWidth / groupCount;
+      const barWidth = Math.min(18, groupWidth * 0.34);
+      const barGap = 3;
+
+      let gridHtml = '';
+      yTicks.forEach(val => {
+        const y = padTop + plotHeight - (val / maxY) * plotHeight;
+        gridHtml += `
+          <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="${val === 0 ? '#cbd5e1' : '#f1f5f9'}" stroke-width="1" />
+          <text x="${padLeft - 8}" y="${y + 3}" text-anchor="end" font-size="10" fill="#6b7280">${val}</text>
+        `;
+      });
+
+      let barsHtml = '';
+      data.forEach((d, idx) => {
+        const groupStartX = padLeft + idx * groupWidth;
+        const groupCenterX = groupStartX + groupWidth / 2;
+
+        gridHtml += `<line x1="${groupStartX}" y1="${padTop}" x2="${groupStartX}" y2="${padTop + plotHeight}" stroke="#f3f4f6" stroke-width="1" />`;
+
+        const tHeight = (d.target / maxY) * plotHeight;
+        const rHeight = (d.realisasi / maxY) * plotHeight;
+        const tX = groupCenterX - barWidth - barGap / 2;
+        const rX = groupCenterX + barGap / 2;
+        const tY = padTop + plotHeight - tHeight;
+        const rY = padTop + plotHeight - rHeight;
+
+        const targetDrawH = d.target > 0 ? Math.max(tHeight, 2) : 1.5;
+        const targetDrawY = d.target > 0 ? tY : padTop + plotHeight - 1.5;
+
+        const realDrawH = d.realisasi > 0 ? Math.max(rHeight, 2) : 1.5;
+        const realDrawY = d.realisasi > 0 ? rY : padTop + plotHeight - 1.5;
+
+        barsHtml += `
+          <g class="group cursor-pointer">
+            <title>${d.code} - Target: ${d.target}, Realisasi: ${d.realisasi}</title>
+            <rect x="${tX}" y="${targetDrawY}" width="${barWidth}" height="${targetDrawH}" fill="#1a9614" rx="0.5" />
+            <text x="${tX + barWidth / 2}" y="${targetDrawY - 6}" text-anchor="middle" font-size="9" fill="#4b5563">${d.target}</text>
+
+            <rect x="${rX}" y="${realDrawY}" width="${barWidth}" height="${realDrawH}" fill="#2538f5" rx="0.5" />
+            <text x="${rX + barWidth / 2}" y="${realDrawY - 6}" text-anchor="middle" font-size="9" fill="#4b5563">${d.realisasi}</text>
+
+            <text x="${groupCenterX}" y="${padTop + plotHeight + 16}" text-anchor="middle" font-size="9.5" fill="#6b7280">${d.code}</text>
+          </g>
+        `;
+      });
+
+      gridHtml += `<line x1="${width - padRight}" y1="${padTop}" x2="${width - padRight}" y2="${padTop + plotHeight}" stroke="#f3f4f6" stroke-width="1" />`;
+
+      const legendX = width / 2 - 75;
+      const legendHtml = `
+        <g transform="translate(${legendX}, 6)">
+          <rect x="0" y="0" width="26" height="10" fill="#1a9614" />
+          <text x="31" y="9" font-size="10.5" fill="#6b7280">Target</text>
+          <rect x="74" y="0" width="26" height="10" fill="#2538f5" />
+          <text x="105" y="9" font-size="10.5" fill="#6b7280">Realisasi</text>
+        </g>
+      `;
+
+      return `
+        <svg viewBox="0 0 ${width} ${height}" class="w-full h-auto select-none">
+          ${legendHtml}
+          ${gridHtml}
+          ${barsHtml}
+        </svg>
+      `;
+    }
+
+    function filterDashboardChart() {
+      const year = document.getElementById('dash-year-filter').value;
+      const month = document.getElementById('dash-month-filter').value;
+      const wrap = document.getElementById('dashboard-chart-wrap');
+      if (!wrap) return;
+
+      if (year === 'all' && month === 'all') {
+        wrap.innerHTML = buildDashboardChartSVG(chartDivisions);
+        return;
+      }
+
+      const factor = year === 'all' ? 0.12 : (month === 'all' ? 0.85 : 0.09);
+      const filteredData = chartDivisions.map(d => {
+        const t = Math.round(d.target * factor);
+        const r = Math.min(t, Math.round(d.realisasi * factor));
+        return { code: d.code, target: t, realisasi: r };
+      });
+      wrap.innerHTML = buildDashboardChartSVG(filteredData);
+    }
+
+    // =========================================================================
+    // PAGE 2: ADD -> ADD DATA REGULASI (/add-data-regulasi)
+    // =========================================================================
+    let selectedRegulasiFileName = '';
+
+    function renderAddRegulasi(container) {
+      selectedRegulasiFileName = '';
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-6">
+            Tambah data regulasi
+          </h2>
+
+          <form id="form-add-regulasi" onsubmit="submitAddRegulasi(event)" class="max-w-4xl mx-auto space-y-4 text-[12px]">
+            <!-- Row 1: Regulasi -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Regulasi</label>
+              <div class="md:col-span-9">
+                <input type="text" id="reg-nama" required class="sipatuh-input" />
+              </div>
+            </div>
+
+            <!-- Row 2: Perihal -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Perihal</label>
+              <div class="md:col-span-9">
+                <input type="text" id="reg-perihal" required class="sipatuh-input" />
+              </div>
+            </div>
+
+            <!-- Row 3: Tanggal Terbit -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Tanggal Terbit</label>
+              <div class="md:col-span-9">
+                <input type="date" id="reg-tanggal" required class="sipatuh-input text-gray-600" />
+              </div>
+            </div>
+
+            <!-- Row 4: Regulator -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Regulator</label>
+              <div class="md:col-span-9">
+                <select id="reg-regulator" required class="sipatuh-input text-gray-600">
+                  <option value="">Pilih Regulator</option>
+                  <option value="OJK">Otoritas Jasa Keuangan (OJK)</option>
+                  <option value="BI">Bank Indonesia (BI)</option>
+                  <option value="KEMENKEU">Kementerian Keuangan (KEMENKEU)</option>
+                  <option value="KEMENBUMN">Kementerian BUMN</option>
+                  <option value="PPATK">PPATK</option>
+                  <option value="BEI">Bursa Efek Indonesia (BEI)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 5: Jenis Regulasi -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Jenis Regulasi</label>
+              <div class="md:col-span-9">
+                <select id="reg-jenis" required class="sipatuh-input text-gray-600">
+                  <option value="">Pilih Jenis Regulasi</option>
+                  <option value="Undang-Undang">Undang-Undang (UU)</option>
+                  <option value="Peraturan Pemerintah">Peraturan Pemerintah (PP)</option>
+                  <option value="POJK">Peraturan Otoritas Jasa Keuangan (POJK)</option>
+                  <option value="SEOJK">Surat Edaran Otoritas Jasa Keuangan (SEOJK)</option>
+                  <option value="PBI">Peraturan Bank Indonesia (PBI)</option>
+                  <option value="Peraturan Menteri">Peraturan Menteri</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 6: Ruang Lingkup -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Ruang Lingkup</label>
+              <div class="md:col-span-9">
+                <input type="text" id="reg-lingkup" class="sipatuh-input" />
+              </div>
+            </div>
+
+            <!-- Row 7: Status Regulasi -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6 py-1">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Status Regulasi</label>
+              <div class="md:col-span-9 flex flex-wrap items-center gap-12 sm:gap-20 text-gray-600">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="reg-status" value="Berlaku" checked class="w-3.5 h-3.5 text-[#2557d6] border-gray-400" />
+                  <span>Berlaku</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="reg-status" value="Perubahan" class="w-3.5 h-3.5 text-[#2557d6] border-gray-400" />
+                  <span>Perubahan</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="reg-status" value="Pembaruan" class="w-3.5 h-3.5 text-[#2557d6] border-gray-400" />
+                  <span>Pembaruan</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Row 8: Keterangan Tambahan -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-start gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal pt-2">Keterangan Tambahan</label>
+              <div class="md:col-span-9">
+                <textarea id="reg-keterangan" rows="2" class="sipatuh-input resize-y"></textarea>
+              </div>
+            </div>
+
+            <!-- Row 9: Attachment (Pilih File & VIEW SIMAK stacked full-width buttons) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-start gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal pt-3">Attachment</label>
+              <div class="md:col-span-9 space-y-1.5">
+                <input type="file" id="reg-file-input" class="hidden" onchange="handleRegFileSelect(event)" />
+                <button type="button" onclick="document.getElementById('reg-file-input').click()"
+                  class="w-full py-1.5 px-4 bg-[#efefef] hover:bg-gray-200 border border-gray-300 rounded-sm text-center text-[11.5px] text-gray-600 transition-colors">
+                  <span id="reg-file-label">Pilih File</span>
+                </button>
+                <button type="button" onclick="openSimakModal()"
+                  class="w-full py-1.5 px-4 bg-[#efefef] hover:bg-gray-200 border border-gray-300 rounded-sm text-center text-[11.5px] text-gray-600 uppercase tracking-wide transition-colors">
+                  VIEW SIMAK
+                </button>
+              </div>
+            </div>
+
+            <!-- Bottom Action Bar: Cancel (left) & Submit (right) -->
+            <div class="pt-8 flex items-center justify-between">
+              <button type="button" onclick="navigateTo('dashboard-monitoring')"
+                class="px-3.5 py-1.5 bg-[#ef4444] hover:bg-red-600 text-white text-[11.5px] font-medium rounded shadow-sm transition-colors">
+                Cancel
+              </button>
+              <button type="submit"
+                class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm transition-colors">
+                Submit
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function handleRegFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        selectedRegulasiFileName = file.name;
+        const lbl = document.getElementById('reg-file-label');
+        if (lbl) lbl.textContent = `File terpilih: ${file.name}`;
+      }
+    }
+
+    function openSimakModal() {
+      const modal = document.getElementById('simak-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeSimakModal() {
+      const modal = document.getElementById('simak-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function selectSimakDoc(fileName) {
+      selectedRegulasiFileName = fileName;
+      const lbl = document.getElementById('reg-file-label');
+      if (lbl) lbl.textContent = `SIMAK Terlampir: ${fileName}`;
+      closeSimakModal();
+      showToast(`Dokumen ${fileName} berhasil ditautkan dari SIMAK`, 'info');
+    }
+
+    function submitAddRegulasi(e) {
+      e.preventDefault();
+      const nama = document.getElementById('reg-nama').value.trim();
+      const perihal = document.getElementById('reg-perihal').value.trim();
+      const tglRaw = document.getElementById('reg-tanggal').value;
+      const regulator = document.getElementById('reg-regulator').value;
+      const jenis = document.getElementById('reg-jenis').value;
+      const lingkup = document.getElementById('reg-lingkup').value.trim();
+      const status = document.querySelector('input[name="reg-status"]:checked').value;
+      const keterangan = document.getElementById('reg-keterangan').value.trim();
+
+      const tglFmt = tglRaw ? tglRaw.split('-').reverse().join('/') : '16/11/2026';
+
+      masterRegulasiList.unshift({
+        id: masterRegulasiList.length + 1,
+        regulasi: nama,
+        perihal: perihal,
+        tanggalTerbit: tglFmt,
+        regulator: regulator,
+        jenis: jenis,
+        ruangLingkup: lingkup || '-',
+        status: status,
+        keterangan: keterangan || '-',
+        attachment: selectedRegulasiFileName || 'Dokumen_Regulasi.pdf'
+      });
+
+      showToast('Data regulasi berhasil ditambahkan!');
+      navigateTo('master-regulasi');
+    }
+
+    // =========================================================================
+    // PAGE 2B: ADD -> ADD DATA KEWAJIBAN (/add-data-kewajiban)
+    // =========================================================================
+    function renderAddKewajiban(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-6">
+            Tambah data kewajiban
+          </h2>
+
+          <form onsubmit="submitAddKewajiban(event)" class="max-w-4xl mx-auto space-y-4 text-[12px]">
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600">Regulasi Terkait</label>
+              <div class="md:col-span-9">
+                <select id="kwj-regulasi" required class="sipatuh-input text-gray-600">
+                  <option value="">Pilih Regulasi</option>
+                  ${masterRegulasiList.map(r => `<option value="${r.regulasi}">${r.regulasi}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600">Kewajiban Pelaporan</label>
+              <div class="md:col-span-9">
+                <input type="text" id="kwj-nama" required class="sipatuh-input" placeholder="Uraian kewajiban pelaporan" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600">Tujuan Pelaporan</label>
+              <div class="md:col-span-9">
+                <select id="kwj-tujuan" required class="sipatuh-input text-gray-600">
+                  <option value="OJK">OJK</option>
+                  <option value="KEMENKEU">KEMENKEU</option>
+                  <option value="BI">BI</option>
+                  <option value="PPATK">PPATK</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600">Reporting Owner / Pelapor</label>
+              <div class="md:col-span-9">
+                <select id="kwj-owner" required class="sipatuh-input text-gray-600">
+                  <option value="Divisi Kepatuhan">Divisi Kepatuhan</option>
+                  <option value="Divisi Akuntansi Manajemen dan Keuangan">Divisi Akuntansi Manajemen dan Keuangan</option>
+                  <option value="Divisi Manajemen Risiko Operasional dan Korporasi">Divisi Manajemen Risiko Operasional dan Korporasi</option>
+                  <option value="Corporate Secretary">Corporate Secretary</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600">Periode Pelaporan</label>
+              <div class="md:col-span-9">
+                <select id="kwj-periode" class="sipatuh-input text-gray-600">
+                  <option value="Bulanan">Bulanan</option>
+                  <option value="Triwulanan">Triwulanan</option>
+                  <option value="Semesteran">Semesteran</option>
+                  <option value="Tahunan">Tahunan</option>
+                  <option value="Insidentil">Insidentil</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600">Tanggal Jatuh Tempo</label>
+              <div class="md:col-span-9">
+                <input type="date" id="kwj-tempo" required class="sipatuh-input text-gray-600" />
+              </div>
+            </div>
+
+            <div class="pt-8 flex items-center justify-between">
+              <button type="button" onclick="navigateTo('dashboard-monitoring')"
+                class="px-3.5 py-1.5 bg-[#ef4444] hover:bg-red-600 text-white text-[11.5px] font-medium rounded shadow-sm">
+                Cancel
+              </button>
+              <button type="submit"
+                class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm">
+                Submit
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function submitAddKewajiban(e) {
+      e.preventDefault();
+      const regulasi = document.getElementById('kwj-regulasi').value;
+      const kewajiban = document.getElementById('kwj-nama').value.trim();
+      const tujuan = document.getElementById('kwj-tujuan').value;
+      const owner = document.getElementById('kwj-owner').value;
+      const periode = document.getElementById('kwj-periode').value;
+
+      pelaporanList.unshift({
+        no: pelaporanList.length + 1,
+        regulasi: regulasi,
+        tujuan: tujuan,
+        kewajiban: kewajiban,
+        sanksi: 'Sanksi Administratif',
+        owner: owner,
+        pelapor: owner,
+        periode: periode,
+        ketPeriode: '',
+        tglJatuhTempo: '20 Dec 2026',
+        hitungWaktu: 'On Progress',
+        statusRealisasi: 'Menunggu Pelaporan',
+        statusLapor: 'BELUM LAPOR',
+        catatan: '',
+        tglRealisasi: '-',
+        tahun: '2026'
+      });
+
+      showToast('Data kewajiban berhasil disimpan!');
+      navigateTo('pelaporan');
+    }
+
+    // =========================================================================
+    // PAGE 2C: ADD -> ADD DATA SANKSI (/add-data-sanksi)
+    // =========================================================================
+    let selectedSanksiFileName = '';
+
+    function renderAddSanksi(container) {
+      selectedSanksiFileName = '';
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-6">
+            Tambah data sanksi
+          </h2>
+
+          <form id="form-add-sanksi" onsubmit="submitAddSanksi(event)" class="max-w-4xl mx-auto space-y-4 text-[12px]">
+            <!-- Row 1: Nomor Surat Regulator -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Nomor Surat Regulator</label>
+              <div class="md:col-span-9">
+                <input type="text" id="snk-nomor-surat" required class="sipatuh-input" placeholder="Contoh: S-142/NB.22/2026" />
+              </div>
+            </div>
+
+            <!-- Row 2: Tanggal Surat -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Tanggal Surat</label>
+              <div class="md:col-span-9">
+                <input type="date" id="snk-tanggal-surat" required class="sipatuh-input text-gray-600" />
+              </div>
+            </div>
+
+            <!-- Row 3: Perihal -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Perihal</label>
+              <div class="md:col-span-9">
+                <input type="text" id="snk-perihal" required class="sipatuh-input" placeholder="Perihal surat sanksi dari regulator" />
+              </div>
+            </div>
+
+            <!-- Row 4: Tujuan Pelaporan -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Tujuan Pelaporan</label>
+              <div class="md:col-span-9">
+                <select id="snk-tujuan" required class="sipatuh-input text-gray-600">
+                  <option value="">Pilih Tujuan Pelaporan</option>
+                  <option value="OJK">OJK</option>
+                  <option value="BI">BI</option>
+                  <option value="KEMENKEU">KEMENKEU</option>
+                  <option value="KEMENBUMN">KEMENBUMN</option>
+                  <option value="PPATK">PPATK</option>
+                  <option value="BEI">BEI</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 5: Reporter Owner -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Reporter Owner</label>
+              <div class="md:col-span-9">
+                <select id="snk-owner" required class="sipatuh-input text-gray-600">
+                  <option value="">Pilih Reporter Owner</option>
+                  <option value="Divisi Akuntansi Manajemen dan Keuangan">Divisi Akuntansi Manajemen dan Keuangan</option>
+                  <option value="Divisi Manajemen Risiko Operasional dan Korporasi">Divisi Manajemen Risiko Operasional dan Korporasi</option>
+                  <option value="Corporate Secretary">Corporate Secretary</option>
+                  <option value="Divisi Kepatuhan">Divisi Kepatuhan</option>
+                  <option value="Divisi Legal">Divisi Legal</option>
+                  <option value="Divisi Tresuri dan Pendanaan">Divisi Tresuri dan Pendanaan</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 6: Jenis Sanksi -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Jenis Sanksi <span class="text-red-500">*</span></label>
+              <div class="md:col-span-9">
+                <select id="snk-jenis" required onchange="handleJenisSanksiChange()" class="sipatuh-input text-gray-700">
+                  <option value="Denda Administratif" selected>Denda Administratif</option>
+                  <option value="Peringatan Tertulis">Peringatan Tertulis</option>
+                  <option value="Teguran Keterlambatan">Teguran Keterlambatan</option>
+                  <option value="Pembatasan Kegiatan Usaha">Pembatasan Kegiatan Usaha</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 7: Nominal Denda (Only visible when Jenis Sanksi === 'Denda Administratif') -->
+            <div id="snk-nominal-row" class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Nominal Denda (Rp) <span class="text-red-500">*</span></label>
+              <div class="md:col-span-9">
+                <input type="text" id="snk-nominal" required oninput="formatRupiahInput(this)" class="sipatuh-input" placeholder="Contoh: 50.000.000" />
+              </div>
+            </div>
+
+            <!-- Row 8: Tanggal Jatuh Tempo -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Tanggal Jatuh Tempo</label>
+              <div class="md:col-span-9">
+                <input type="date" id="snk-jatuh-tempo" required class="sipatuh-input text-gray-600" />
+              </div>
+            </div>
+
+            <!-- Row 9: Regulasi Terkait -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal">Regulasi Terkait</label>
+              <div class="md:col-span-9">
+                <select id="snk-regulasi" class="sipatuh-input text-gray-600">
+                  <option value="">Pilih Regulasi Terkait (Opsional)</option>
+                  ${masterRegulasiList.map(r => `<option value="${r.regulasi}">${r.regulasi}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <!-- Row 10: Keterangan Tambahan -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-start gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal pt-2">Keterangan Tambahan</label>
+              <div class="md:col-span-9">
+                <textarea id="snk-keterangan" rows="2" class="sipatuh-input resize-y" placeholder="Catatan tambahan sanksi..."></textarea>
+              </div>
+            </div>
+
+            <!-- Row 11: Upload File Surat Sanksi -->
+            <div class="grid grid-cols-1 md:grid-cols-12 items-start gap-2 md:gap-6">
+              <label class="md:col-span-3 md:text-right text-gray-600 font-normal pt-2">File Surat Sanksi</label>
+              <div class="md:col-span-9">
+                <input type="file" id="snk-file-input" accept=".pdf,.doc,.docx,.jpg,.png" class="hidden" onchange="handleSanksiFileSelect(event)" />
+                <button type="button" onclick="document.getElementById('snk-file-input').click()"
+                  class="w-full py-1.5 px-4 bg-[#efefef] hover:bg-gray-200 border border-gray-300 rounded-sm text-center text-[11.5px] text-gray-600 transition-colors flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-upload text-gray-500 text-[11px]"></i>
+                  <span id="snk-file-label">Upload File Surat Sanksi</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Bottom Action Bar: Cancel (left) & Submit (right) -->
+            <div class="pt-8 flex items-center justify-between">
+              <button type="button" onclick="navigateTo('dashboard-monitoring')"
+                class="px-3.5 py-1.5 bg-[#ef4444] hover:bg-red-600 text-white text-[11.5px] font-medium rounded shadow-sm transition-colors">
+                Cancel
+              </button>
+              <button type="submit"
+                class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm transition-colors">
+                Submit
+              </button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function handleJenisSanksiChange() {
+      const jenis = document.getElementById('snk-jenis').value;
+      const nominalRow = document.getElementById('snk-nominal-row');
+      const nominalInput = document.getElementById('snk-nominal');
+      if (!nominalRow || !nominalInput) return;
+
+      if (jenis === 'Denda Administratif') {
+        nominalRow.classList.remove('hidden');
+        nominalInput.required = true;
+      } else {
+        nominalRow.classList.add('hidden');
+        nominalInput.required = false;
+        nominalInput.value = '';
+      }
+    }
+
+    function formatRupiahInput(el) {
+      const raw = el.value.replace(/\D/g, '');
+      el.value = raw ? raw.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
+    }
+
+    function handleSanksiFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        selectedSanksiFileName = file.name;
+        const lbl = document.getElementById('snk-file-label');
+        if (lbl) lbl.textContent = `File terpilih: ${file.name}`;
+      }
+    }
+
+    function submitAddSanksi(e) {
+      e.preventDefault();
+      const nomorSurat = document.getElementById('snk-nomor-surat').value.trim();
+      const tglSuratRaw = document.getElementById('snk-tanggal-surat').value;
+      const perihal = document.getElementById('snk-perihal').value.trim();
+      const tujuan = document.getElementById('snk-tujuan').value;
+      const owner = document.getElementById('snk-owner').value;
+      const jenisSanksi = document.getElementById('snk-jenis').value;
+      const nominalVal = document.getElementById('snk-nominal').value.trim();
+      const tglTempoRaw = document.getElementById('snk-jatuh-tempo').value;
+      const regulasi = document.getElementById('snk-regulasi').value;
+      const keterangan = document.getElementById('snk-keterangan').value.trim();
+
+      const tglSuratFmt = tglSuratRaw ? tglSuratRaw.split('-').reverse().join('/') : '-';
+      const tglTempoFmt = tglTempoRaw ? tglTempoRaw.split('-').reverse().join('/') : '-';
+
+      masterSanksiList.unshift({
+        id: masterSanksiList.reduce((max, s) => Math.max(max, s.id), 0) + 1,
+        nomorSurat: nomorSurat,
+        tanggalSurat: tglSuratFmt,
+        perihal: perihal,
+        tujuanPelaporan: tujuan,
+        reporterOwner: owner,
+        jenisSanksi: jenisSanksi,
+        nominalDenda: jenisSanksi === 'Denda Administratif' && nominalVal ? nominalVal : '-',
+        tanggalJatuhTempo: tglTempoFmt,
+        regulasi: regulasi || '-',
+        keterangan: keterangan || '-',
+        fileSurat: selectedSanksiFileName || `Surat_Sanksi_${nomorSurat.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+        statusApproval: 'Pending Approval',
+        catatanApproval: '',
+        tanggalApproval: '-',
+        statusRealisasi: 'Belum Realisasi',
+        tanggalRealisasi: '-',
+        buktiRealisasi: '',
+        keteranganRealisasi: ''
+      });
+
+      showToast('Data sanksi berhasil ditambahkan dan masuk ke Report Sanksi untuk proses Approval!');
+      navigateTo('report-sanksi');
+    }
+
+    // -------------------------------------------------------------------------
+    // SANKSI -> REPORT SANKSI (/report-sanksi) - APPROVAL WORKFLOW
+    // -------------------------------------------------------------------------
+    let reportSanksiFilters = {
+      tujuan: 'All',
+      jenis: 'All',
+      statusApproval: 'All',
+      search: ''
+    };
+
+    function renderReportSanksi(container) {
+      const tujuans = ['All', ...new Set(masterSanksiList.map(s => s.tujuanPelaporan).filter(Boolean))];
+      const jenises = ['All', 'Denda Administratif', 'Peringatan Tertulis', 'Teguran Keterlambatan', 'Pembatasan Kegiatan Usaha'];
+
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div>
+              <h2 class="text-[15px] font-normal text-gray-600">Report Sanksi</h2>
+              <p class="text-[11px] text-gray-400 mt-0.5">Daftar pengajuan sanksi dari Add Data Sanksi yang memerlukan verifikasi & approval sebelum masuk ke Realisasi Sanksi.</p>
+            </div>
+            <button onclick="navigateTo('add-data-sanksi')"
+              class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Add Data Sanksi</span>
+            </button>
+          </div>
+
+          <!-- Filter Section -->
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 text-[11.5px] mb-5">
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Tujuan Pelaporan</label>
+              <select id="rsnk-flt-tujuan" onchange="applyReportSanksiFilters()" class="sipatuh-input text-gray-600">
+                ${tujuans.map(v => `<option value="${v}" ${reportSanksiFilters.tujuan === v ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Jenis Sanksi</label>
+              <select id="rsnk-flt-jenis" onchange="applyReportSanksiFilters()" class="sipatuh-input text-gray-600">
+                ${jenises.map(v => `<option value="${v}" ${reportSanksiFilters.jenis === v ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Status Approval</label>
+              <select id="rsnk-flt-status" onchange="applyReportSanksiFilters()" class="sipatuh-input text-gray-600">
+                <option value="All" ${reportSanksiFilters.statusApproval === 'All' ? 'selected' : ''}>All</option>
+                <option value="Pending Approval" ${reportSanksiFilters.statusApproval === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
+                <option value="Approved" ${reportSanksiFilters.statusApproval === 'Approved' ? 'selected' : ''}>Approved</option>
+                <option value="Rejected" ${reportSanksiFilters.statusApproval === 'Rejected' ? 'selected' : ''}>Rejected</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <button onclick="exportSanksiExcel('report')"
+              class="px-3 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-[11px] font-medium rounded shadow-sm transition-colors">
+              Excel
+            </button>
+            <div class="flex items-center gap-2 text-[11.5px] text-gray-600">
+              <label for="rsnk-search">Search:</label>
+              <input type="text" id="rsnk-search" value="${reportSanksiFilters.search}" oninput="applyReportSanksiFilters()"
+                class="border border-gray-300 rounded px-2.5 py-1 text-[11.5px] focus:outline-none focus:border-[#2557d6] w-44" />
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[1480px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-40">Nomor Surat Regulator</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal Surat</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-60">Perihal</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tujuan<br>Pelaporan</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-44">Reporter Owner</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-36">Jenis Sanksi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-32">Nominal Denda</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal<br>Jatuh Tempo</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-40">File Surat Sanksi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-32">Status Approval</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-40">Catatan Approval</th>
+                  <th class="py-3 px-3 text-center w-28">Action</th>
+                </tr>
+              </thead>
+              <tbody id="report-sanksi-tbody" class="divide-y divide-gray-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      renderReportSanksiRows();
+    }
+
+    function applyReportSanksiFilters() {
+      reportSanksiFilters.tujuan = document.getElementById('rsnk-flt-tujuan').value;
+      reportSanksiFilters.jenis = document.getElementById('rsnk-flt-jenis').value;
+      reportSanksiFilters.statusApproval = document.getElementById('rsnk-flt-status').value;
+      reportSanksiFilters.search = document.getElementById('rsnk-search').value.toLowerCase();
+      renderReportSanksiRows();
+    }
+
+    function renderReportSanksiRows() {
+      const tbody = document.getElementById('report-sanksi-tbody');
+      if (!tbody) return;
+
+      const filtered = masterSanksiList.filter(s => {
+        if (reportSanksiFilters.tujuan !== 'All' && s.tujuanPelaporan !== reportSanksiFilters.tujuan) return false;
+        if (reportSanksiFilters.jenis !== 'All' && s.jenisSanksi !== reportSanksiFilters.jenis) return false;
+        if (reportSanksiFilters.statusApproval !== 'All' && s.statusApproval !== reportSanksiFilters.statusApproval) return false;
+        if (reportSanksiFilters.search) {
+          const hay = Object.values(s).join(' ').toLowerCase();
+          if (!hay.includes(reportSanksiFilters.search)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="13" class="py-6 text-center text-gray-500">Tidak ada data sanksi yang sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((s, idx) => {
+        let statusBadge = '';
+        if (s.statusApproval === 'Approved') {
+          statusBadge = `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-medium">Approved</span>`;
+        } else if (s.statusApproval === 'Rejected') {
+          statusBadge = `<span class="px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 text-[10.5px] font-medium">Rejected</span>`;
+        } else {
+          statusBadge = `<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10.5px] font-medium">Pending Approval</span>`;
+        }
+
+        return `
+          <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40 align-top">
+            <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${s.nomorSurat}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalSurat}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.perihal}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.tujuanPelaporan}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.reporterOwner}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.jenisSanksi}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-700">${s.nominalDenda !== '-' ? 'Rp ' + s.nominalDenda : '-'}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalJatuhTempo}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">
+              <button type="button" onclick="showToast('Membuka file ${s.fileSurat}', 'info')"
+                class="text-[#2557d6] hover:underline inline-flex items-center gap-1 text-left">
+                <i class="fa-solid fa-file-pdf text-red-500"></i>
+                <span class="break-all">${s.fileSurat}</span>
+              </button>
+            </td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${statusBadge}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 text-gray-500">${s.catatanApproval || '-'}</td>
+            <td class="py-3.5 px-3 text-center">
+              ${s.statusApproval === 'Approved'
+                ? `<button type="button" onclick="navigateTo('realisasi-sanksi')"
+                    class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-[#2557d6] border border-blue-200 rounded-sm text-[10.5px] font-medium">
+                    Lihat Realisasi
+                  </button>`
+                : `<button type="button" onclick="openApprovalSanksiModal(${s.id})"
+                    class="px-2.5 py-1 bg-[#00a680] hover:bg-[#008f6e] text-white rounded-sm text-[10.5px] font-medium inline-flex items-center gap-1 shadow-xs">
+                    <i class="fa-solid fa-check-double text-[9px]"></i>
+                    <span>Approval</span>
+                  </button>`
+              }
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openApprovalSanksiModal(sanksiId) {
+      const item = masterSanksiList.find(s => s.id === sanksiId);
+      if (!item) return;
+
+      document.getElementById('appr-sanksi-id').value = item.id;
+      document.getElementById('appr-sanksi-nomor').textContent = item.nomorSurat;
+      document.getElementById('appr-sanksi-perihal').textContent = item.perihal;
+      document.getElementById('appr-sanksi-jenis').textContent = item.nominalDenda !== '-'
+        ? `${item.jenisSanksi} (Rp ${item.nominalDenda})`
+        : item.jenisSanksi;
+      document.getElementById('appr-sanksi-decision').value = 'Approved';
+      document.getElementById('appr-sanksi-catatan').value = item.catatanApproval || '';
+
+      const modal = document.getElementById('approval-sanksi-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeApprovalSanksiModal() {
+      const modal = document.getElementById('approval-sanksi-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitApprovalSanksi(e) {
+      e.preventDefault();
+      const id = parseInt(document.getElementById('appr-sanksi-id').value, 10);
+      const decision = document.getElementById('appr-sanksi-decision').value;
+      const catatan = document.getElementById('appr-sanksi-catatan').value.trim();
+
+      const item = masterSanksiList.find(s => s.id === id);
+      if (!item) return;
+
+      item.statusApproval = decision;
+      item.catatanApproval = catatan || (decision === 'Approved' ? 'Disetujui Supervisor' : 'Ditolak untuk perbaikan');
+      item.tanggalApproval = '16/11/2026';
+
+      closeApprovalSanksiModal();
+
+      if (decision === 'Approved') {
+        showToast(`Sanksi ${item.nomorSurat} telah di-Approve dan masuk ke Realisasi Sanksi!`);
+        navigateTo('realisasi-sanksi');
+      } else {
+        showToast(`Sanksi ${item.nomorSurat} dikembalikan (Rejected)`, 'error');
+        renderReportSanksiRows();
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // SANKSI -> REALISASI SANKSI (/realisasi-sanksi) - APPROVED SANCTIONS
+    // -------------------------------------------------------------------------
+    let realisasiSanksiFilters = {
+      owner: 'All',
+      jenis: 'All',
+      statusRealisasi: 'All',
+      search: ''
+    };
+
+    function renderRealisasiSanksi(container) {
+      const approvedList = masterSanksiList.filter(s => s.statusApproval === 'Approved');
+      const owners = ['All', ...new Set(approvedList.map(s => s.reporterOwner).filter(Boolean))];
+      const jenises = ['All', 'Denda Administratif', 'Peringatan Tertulis', 'Teguran Keterlambatan', 'Pembatasan Kegiatan Usaha'];
+
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div>
+              <h2 class="text-[15px] font-normal text-gray-600">Realisasi Sanksi</h2>
+              <p class="text-[11px] text-gray-400 mt-0.5">Daftar sanksi yang telah di-Approve pada Report Sanksi untuk dilakukan pemantauan dan penyelesaian tindak lanjut.</p>
+            </div>
+            <button onclick="navigateTo('report-sanksi')"
+              class="px-3.5 py-1.5 bg-[#4b5563] hover:bg-[#374151] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-left text-[10px]"></i>
+              <span>Ke Report Sanksi</span>
+            </button>
+          </div>
+
+          <!-- Filter Section -->
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 text-[11.5px] mb-5">
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Reporter Owner</label>
+              <select id="realsnk-flt-owner" onchange="applyRealisasiSanksiFilters()" class="sipatuh-input text-gray-600">
+                ${owners.map(v => `<option value="${v}" ${realisasiSanksiFilters.owner === v ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Jenis Sanksi</label>
+              <select id="realsnk-flt-jenis" onchange="applyRealisasiSanksiFilters()" class="sipatuh-input text-gray-600">
+                ${jenises.map(v => `<option value="${v}" ${realisasiSanksiFilters.jenis === v ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Status Realisasi</label>
+              <select id="realsnk-flt-status" onchange="applyRealisasiSanksiFilters()" class="sipatuh-input text-gray-600">
+                <option value="All" ${realisasiSanksiFilters.statusRealisasi === 'All' ? 'selected' : ''}>All</option>
+                <option value="Belum Realisasi" ${realisasiSanksiFilters.statusRealisasi === 'Belum Realisasi' ? 'selected' : ''}>Belum Realisasi</option>
+                <option value="Dalam Proses Tindak Lanjut" ${realisasiSanksiFilters.statusRealisasi === 'Dalam Proses Tindak Lanjut' ? 'selected' : ''}>Dalam Proses Tindak Lanjut</option>
+                <option value="Selesai / Sudah Dibayar" ${realisasiSanksiFilters.statusRealisasi === 'Selesai / Sudah Dibayar' ? 'selected' : ''}>Selesai / Sudah Dibayar</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <button onclick="exportSanksiExcel('realisasi')"
+              class="px-3 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-[11px] font-medium rounded shadow-sm transition-colors">
+              Excel
+            </button>
+            <div class="flex items-center gap-2 text-[11.5px] text-gray-600">
+              <label for="realsnk-search">Search:</label>
+              <input type="text" id="realsnk-search" value="${realisasiSanksiFilters.search}" oninput="applyRealisasiSanksiFilters()"
+                class="border border-gray-300 rounded px-2.5 py-1 text-[11.5px] focus:outline-none focus:border-[#2557d6] w-44" />
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[1560px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-40">Nomor Surat Regulator</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-56">Perihal</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tujuan<br>Pelaporan</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-44">Reporter Owner</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-36">Jenis Sanksi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-32">Nominal Denda</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal<br>Jatuh Tempo</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Status<br>Approval</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-36">Status Realisasi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal<br>Realisasi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-44">Bukti Realisasi</th>
+                  <th class="py-3 px-3 text-center w-32">Action</th>
+                </tr>
+              </thead>
+              <tbody id="realisasi-sanksi-tbody" class="divide-y divide-gray-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      renderRealisasiSanksiRows();
+    }
+
+    function applyRealisasiSanksiFilters() {
+      realisasiSanksiFilters.owner = document.getElementById('realsnk-flt-owner').value;
+      realisasiSanksiFilters.jenis = document.getElementById('realsnk-flt-jenis').value;
+      realisasiSanksiFilters.statusRealisasi = document.getElementById('realsnk-flt-status').value;
+      realisasiSanksiFilters.search = document.getElementById('realsnk-search').value.toLowerCase();
+      renderRealisasiSanksiRows();
+    }
+
+    function renderRealisasiSanksiRows() {
+      const tbody = document.getElementById('realisasi-sanksi-tbody');
+      if (!tbody) return;
+
+      const approvedOnly = masterSanksiList.filter(s => s.statusApproval === 'Approved');
+      const filtered = approvedOnly.filter(s => {
+        if (realisasiSanksiFilters.owner !== 'All' && s.reporterOwner !== realisasiSanksiFilters.owner) return false;
+        if (realisasiSanksiFilters.jenis !== 'All' && s.jenisSanksi !== realisasiSanksiFilters.jenis) return false;
+        if (realisasiSanksiFilters.statusRealisasi !== 'All' && s.statusRealisasi !== realisasiSanksiFilters.statusRealisasi) return false;
+        if (realisasiSanksiFilters.search) {
+          const hay = Object.values(s).join(' ').toLowerCase();
+          if (!hay.includes(realisasiSanksiFilters.search)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="13" class="py-6 text-center text-gray-500">Belum ada data sanksi yang di-Approve atau sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((s, idx) => {
+        const isDone = s.statusRealisasi === 'Selesai / Sudah Dibayar';
+        const realBadge = isDone
+          ? `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-medium">${s.statusRealisasi}</span>`
+          : `<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10.5px] font-medium">${s.statusRealisasi}</span>`;
+
+        return `
+          <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40 align-top">
+            <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${s.nomorSurat}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.perihal}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.tujuanPelaporan}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.reporterOwner}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.jenisSanksi}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-700">${s.nominalDenda !== '-' ? 'Rp ' + s.nominalDenda : '-'}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalJatuhTempo}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">
+              <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[10.5px] font-medium">Approved</span>
+            </td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${realBadge}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalRealisasi || '-'}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">
+              ${s.buktiRealisasi
+                ? `<button type="button" onclick="showToast('Membuka bukti ${s.buktiRealisasi}', 'info')"
+                    class="text-[#2557d6] hover:underline inline-flex items-center gap-1 text-left">
+                    <i class="fa-solid fa-file-circle-check text-emerald-600"></i>
+                    <span class="break-all">${s.buktiRealisasi}</span>
+                  </button>`
+                : `<span class="text-gray-400 italic">Belum diunggah</span>`
+              }
+            </td>
+            <td class="py-3.5 px-3 text-center">
+              <button type="button" onclick="openRealisasiSanksiModal(${s.id})"
+                class="px-2.5 py-1 bg-[#2563eb] hover:bg-blue-700 text-white rounded-sm text-[10.5px] font-medium inline-flex items-center gap-1 shadow-xs">
+                <i class="fa-solid fa-pen-to-square text-[9px]"></i>
+                <span>${isDone ? 'Update' : 'Realisasi'}</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openRealisasiSanksiModal(sanksiId) {
+      const item = masterSanksiList.find(s => s.id === sanksiId);
+      if (!item) return;
+
+      document.getElementById('real-sanksi-id').value = item.id;
+      document.getElementById('real-sanksi-nomor').textContent = item.nomorSurat;
+      document.getElementById('real-sanksi-perihal').textContent = item.perihal;
+      document.getElementById('real-sanksi-tanggal').value = '2026-11-16';
+      document.getElementById('real-sanksi-status').value = item.statusRealisasi === 'Belum Realisasi' ? 'Selesai / Sudah Dibayar' : item.statusRealisasi;
+      document.getElementById('real-sanksi-file').value = '';
+      document.getElementById('real-sanksi-ket').value = item.keteranganRealisasi || '';
+
+      const modal = document.getElementById('realisasi-sanksi-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeRealisasiSanksiModal() {
+      const modal = document.getElementById('realisasi-sanksi-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitRealisasiSanksi(e) {
+      e.preventDefault();
+      const id = parseInt(document.getElementById('real-sanksi-id').value, 10);
+      const tglRaw = document.getElementById('real-sanksi-tanggal').value;
+      const statusReal = document.getElementById('real-sanksi-status').value;
+      const fileInput = document.getElementById('real-sanksi-file');
+      const ket = document.getElementById('real-sanksi-ket').value.trim();
+
+      const item = masterSanksiList.find(s => s.id === id);
+      if (!item) return;
+
+      item.statusRealisasi = statusReal;
+      item.tanggalRealisasi = tglRaw ? tglRaw.split('-').reverse().join('/') : '16/11/2026';
+      if (fileInput.files && fileInput.files[0]) {
+        item.buktiRealisasi = fileInput.files[0].name;
+      } else if (!item.buktiRealisasi) {
+        item.buktiRealisasi = `Bukti_Realisasi_${item.nomorSurat.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      }
+      item.keteranganRealisasi = ket;
+
+      closeRealisasiSanksiModal();
+      renderRealisasiSanksiRows();
+      showToast(`Realisasi sanksi ${item.nomorSurat} berhasil disimpan!`);
+    }
+
+    function exportSanksiExcel(mode) {
+      const rows = mode === 'realisasi'
+        ? masterSanksiList.filter(s => s.statusApproval === 'Approved')
+        : masterSanksiList;
+      const headers = ['No', 'Nomor Surat Regulator', 'Tanggal Surat', 'Perihal', 'Tujuan Pelaporan', 'Reporter Owner', 'Jenis Sanksi', 'Nominal Denda', 'Tanggal Jatuh Tempo', 'Status Approval', 'Status Realisasi', 'Tanggal Realisasi'];
+      const csvLines = [
+        headers.join(','),
+        ...rows.map((s, idx) => [
+          idx + 1,
+          `"${(s.nomorSurat || '').replace(/"/g, '""')}"`,
+          `"${(s.tanggalSurat || '').replace(/"/g, '""')}"`,
+          `"${(s.perihal || '').replace(/"/g, '""')}"`,
+          `"${(s.tujuanPelaporan || '').replace(/"/g, '""')}"`,
+          `"${(s.reporterOwner || '').replace(/"/g, '""')}"`,
+          `"${(s.jenisSanksi || '').replace(/"/g, '""')}"`,
+          `"${(s.nominalDenda || '').replace(/"/g, '""')}"`,
+          `"${(s.tanggalJatuhTempo || '').replace(/"/g, '""')}"`,
+          `"${(s.statusApproval || '').replace(/"/g, '""')}"`,
+          `"${(s.statusRealisasi || '').replace(/"/g, '""')}"`,
+          `"${(s.tanggalRealisasi || '').replace(/"/g, '""')}"`
+        ].join(','))
+      ];
+      const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = mode === 'realisasi' ? 'Realisasi_Sanksi_SIPATUH.csv' : 'Report_Sanksi_SIPATUH.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('File Excel (CSV) berhasil diunduh!');
+    }
+
+    // =========================================================================
+    // PAGE 2D: RIWAYAT NOTIFIKASI (/riwayat-notifikasi) - EMAIL & WA BLAST
+    // =========================================================================
+    let notifFilters = {
+      channel: 'All',
+      kategori: 'All',
+      status: 'All',
+      search: ''
+    };
+
+    function renderRiwayatNotifikasi(container) {
+      const totalEmail = riwayatNotifikasiList.filter(n => n.channel === 'Email Blast').length;
+      const totalWa = riwayatNotifikasiList.filter(n => n.channel === 'WA Blast').length;
+      const totalTerkirim = riwayatNotifikasiList.filter(n => n.status === 'Terkirim').length;
+      const totalGagal = riwayatNotifikasiList.filter(n => n.status === 'Gagal').length;
+
+      const kategoris = ['All', ...new Set(riwayatNotifikasiList.map(n => n.kategori).filter(Boolean))];
+
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div>
+              <h2 class="text-[15px] font-normal text-gray-600">Riwayat Notifikasi (Email Blast &amp; WA Blast)</h2>
+              <p class="text-[11px] text-gray-400 mt-0.5">Log pengiriman notifikasi otomatis maupun manual melalui saluran Email Blast dan WhatsApp (WA) Blast kepada PIC Divisi.</p>
+            </div>
+            <button onclick="openBlastModal()"
+              class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-paper-plane text-[10px]"></i>
+              <span>Kirim Blast Manual</span>
+            </button>
+          </div>
+
+          <!-- Ringkasan Statistik Channel Blast -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5 text-xs">
+            <div class="border border-gray-200 rounded p-3 bg-[#f9fafb] flex items-center justify-between">
+              <div>
+                <p class="text-[11px] text-gray-500">Total Email Blast</p>
+                <p class="text-lg font-semibold text-[#2557d6] mt-0.5">${totalEmail}</p>
+              </div>
+              <div class="w-9 h-9 rounded-full bg-blue-100 text-[#2557d6] flex items-center justify-center">
+                <i class="fa-solid fa-envelope text-sm"></i>
+              </div>
+            </div>
+
+            <div class="border border-gray-200 rounded p-3 bg-[#f9fafb] flex items-center justify-between">
+              <div>
+                <p class="text-[11px] text-gray-500">Total WA Blast</p>
+                <p class="text-lg font-semibold text-emerald-600 mt-0.5">${totalWa}</p>
+              </div>
+              <div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                <i class="fa-brands fa-whatsapp text-base"></i>
+              </div>
+            </div>
+
+            <div class="border border-gray-200 rounded p-3 bg-[#f9fafb] flex items-center justify-between">
+              <div>
+                <p class="text-[11px] text-gray-500">Status Terkirim</p>
+                <p class="text-lg font-semibold text-gray-700 mt-0.5">${totalTerkirim}</p>
+              </div>
+              <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center">
+                <i class="fa-solid fa-check-double text-sm"></i>
+              </div>
+            </div>
+
+            <div class="border border-gray-200 rounded p-3 bg-[#f9fafb] flex items-center justify-between">
+              <div>
+                <p class="text-[11px] text-gray-500">Status Gagal</p>
+                <p class="text-lg font-semibold text-red-600 mt-0.5">${totalGagal}</p>
+              </div>
+              <div class="w-9 h-9 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                <i class="fa-solid fa-circle-exclamation text-sm"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Section -->
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 text-[11.5px] mb-5">
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Channel Blast</label>
+              <select id="notif-flt-channel" onchange="applyNotifFilters()" class="sipatuh-input text-gray-600">
+                <option value="All" ${notifFilters.channel === 'All' ? 'selected' : ''}>All (Email &amp; WA Blast)</option>
+                <option value="Email Blast" ${notifFilters.channel === 'Email Blast' ? 'selected' : ''}>Email Blast</option>
+                <option value="WA Blast" ${notifFilters.channel === 'WA Blast' ? 'selected' : ''}>WA Blast</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Kategori Notifikasi</label>
+              <select id="notif-flt-kategori" onchange="applyNotifFilters()" class="sipatuh-input text-gray-600">
+                ${kategoris.map(k => `<option value="${k}" ${notifFilters.kategori === k ? 'selected' : ''}>${k}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Status Pengiriman</label>
+              <select id="notif-flt-status" onchange="applyNotifFilters()" class="sipatuh-input text-gray-600">
+                <option value="All" ${notifFilters.status === 'All' ? 'selected' : ''}>All</option>
+                <option value="Terkirim" ${notifFilters.status === 'Terkirim' ? 'selected' : ''}>Terkirim</option>
+                <option value="Gagal" ${notifFilters.status === 'Gagal' ? 'selected' : ''}>Gagal</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <button onclick="exportNotifExcel()"
+              class="px-3 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-[11px] font-medium rounded shadow-sm transition-colors">
+              Excel
+            </button>
+
+            <div class="flex items-center gap-2 text-[11.5px] text-gray-600">
+              <label for="notif-search">Search:</label>
+              <input type="text" id="notif-search" value="${notifFilters.search}" oninput="applyNotifFilters()"
+                class="border border-gray-300 rounded px-2.5 py-1 text-[11.5px] focus:outline-none focus:border-[#2557d6] w-44" />
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[1380px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-36">Waktu Kirim</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-32">Channel</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-48">Kategori Notifikasi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-52">Penerima (Email / No. WA)</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-44">Divisi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-64">Subjek / Judul Pesan</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Status</th>
+                  <th class="py-3 px-3 text-center w-32">Action</th>
+                </tr>
+              </thead>
+              <tbody id="riwayat-notif-tbody" class="divide-y divide-gray-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      renderRiwayatNotifikasiRows();
+    }
+
+    function applyNotifFilters() {
+      notifFilters.channel = document.getElementById('notif-flt-channel').value;
+      notifFilters.kategori = document.getElementById('notif-flt-kategori').value;
+      notifFilters.status = document.getElementById('notif-flt-status').value;
+      notifFilters.search = document.getElementById('notif-search').value.toLowerCase();
+      renderRiwayatNotifikasiRows();
+    }
+
+    function renderRiwayatNotifikasiRows() {
+      const tbody = document.getElementById('riwayat-notif-tbody');
+      if (!tbody) return;
+
+      const filtered = riwayatNotifikasiList.filter(n => {
+        if (notifFilters.channel !== 'All' && n.channel !== notifFilters.channel) return false;
+        if (notifFilters.kategori !== 'All' && n.kategori !== notifFilters.kategori) return false;
+        if (notifFilters.status !== 'All' && n.status !== notifFilters.status) return false;
+        if (notifFilters.search) {
+          const hay = Object.values(n).join(' ').toLowerCase();
+          if (!hay.includes(notifFilters.search)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-gray-500">Tidak ada riwayat notifikasi yang sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((n, idx) => {
+        const channelBadge = n.channel === 'WA Blast'
+          ? `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-medium inline-flex items-center gap-1"><i class="fa-brands fa-whatsapp"></i> WA Blast</span>`
+          : `<span class="px-2 py-0.5 rounded bg-blue-50 text-[#2557d6] border border-blue-200 text-[10.5px] font-medium inline-flex items-center gap-1"><i class="fa-solid fa-envelope"></i> Email Blast</span>`;
+
+        const statusBadge = n.status === 'Terkirim'
+          ? `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-medium">Terkirim</span>`
+          : `<span class="px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 text-[10.5px] font-medium">Gagal</span>`;
+
+        return `
+          <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40 align-top">
+            <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 text-gray-700">${n.waktuKirim}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${channelBadge}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${n.kategori}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${n.penerima}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${n.divisi}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${n.subjek}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${statusBadge}</td>
+            <td class="py-3.5 px-3 text-center">
+              <div class="inline-flex items-center gap-1">
+                <button type="button" onclick="openNotifDetailModal(${n.id})"
+                  class="px-2 py-1 bg-[#f3f4f6] hover:bg-gray-200 border border-gray-300 rounded-sm text-[10.5px] text-gray-700" title="Lihat Isi Pesan">
+                  Detail
+                </button>
+                ${n.status === 'Gagal'
+                  ? `<button type="button" onclick="resendNotifikasi(${n.id})"
+                      class="px-2 py-1 bg-[#2563eb] hover:bg-blue-700 text-white rounded-sm text-[10.5px] font-medium" title="Kirim Ulang">
+                      Resend
+                    </button>`
+                  : ''
+                }
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openNotifDetailModal(notifId) {
+      const item = riwayatNotifikasiList.find(n => n.id === notifId);
+      if (!item) return;
+
+      const body = document.getElementById('notif-detail-body');
+      body.innerHTML = `
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Waktu Kirim</span>
+          <span class="col-span-2 font-medium text-gray-800">${item.waktuKirim}</span>
+          <span class="text-gray-400">Channel</span>
+          <span class="col-span-2 font-semibold ${item.channel === 'WA Blast' ? 'text-emerald-600' : 'text-[#2557d6]'}">${item.channel}</span>
+          <span class="text-gray-400">Kategori</span>
+          <span class="col-span-2 text-gray-700">${item.kategori}</span>
+          <span class="text-gray-400">Penerima</span>
+          <span class="col-span-2 font-medium text-gray-800">${item.penerima}</span>
+          <span class="text-gray-400">Divisi</span>
+          <span class="col-span-2 text-gray-700">${item.divisi}</span>
+        </div>
+        <div>
+          <p class="text-gray-400 mb-1">Subjek:</p>
+          <p class="font-semibold text-gray-800 mb-3">${item.subjek}</p>
+          <p class="text-gray-400 mb-1">Isi Pesan:</p>
+          <div class="p-3 rounded bg-gray-50 border border-gray-200 text-gray-700 leading-relaxed whitespace-pre-line">${item.isiPesan}</div>
+        </div>
+      `;
+
+      const modal = document.getElementById('notif-detail-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeNotifDetailModal() {
+      const modal = document.getElementById('notif-detail-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function resendNotifikasi(notifId) {
+      const item = riwayatNotifikasiList.find(n => n.id === notifId);
+      if (!item) return;
+      item.status = 'Terkirim';
+      item.waktuKirim = '16/11/2026 16:15:00';
+      const container = document.getElementById('page-content');
+      if (container) renderRiwayatNotifikasi(container);
+      showToast(`Notifikasi ${item.channel} berhasil dikirim ulang ke ${item.penerima}!`);
+    }
+
+    function openBlastModal() {
+      const modal = document.getElementById('blast-modal');
+      if (!modal) return;
+      document.getElementById('blast-form').reset();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeBlastModal() {
+      const modal = document.getElementById('blast-modal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitBlastNotifikasi(e) {
+      e.preventDefault();
+      const channelChoice = document.getElementById('blast-channel').value;
+      const kategori = document.getElementById('blast-kategori').value;
+      const divisi = document.getElementById('blast-divisi').value;
+      const subjek = document.getElementById('blast-subjek').value.trim();
+      const pesan = document.getElementById('blast-pesan').value.trim();
+
+      const picUser = masterUsersList.find(u => u.divisi === divisi) || masterUsersList[0];
+      const nowStr = '16/11/2026 16:15:30';
+
+      const pushEntry = (ch, targetContact) => {
+        const nextId = riwayatNotifikasiList.reduce((max, n) => Math.max(max, n.id), 0) + 1;
+        riwayatNotifikasiList.unshift({
+          id: nextId,
+          waktuKirim: nowStr,
+          channel: ch,
+          kategori: kategori,
+          penerima: `${picUser.nama} (${targetContact})`,
+          divisi: divisi,
+          subjek: subjek,
+          isiPesan: pesan,
+          status: 'Terkirim'
+        });
+      };
+
+      if (channelChoice === 'Email & WA Blast') {
+        pushEntry('WA Blast', picUser.hp2 || picUser.hp1);
+        pushEntry('Email Blast', picUser.email);
+      } else if (channelChoice === 'Email Blast') {
+        pushEntry('Email Blast', picUser.email);
+      } else {
+        pushEntry('WA Blast', picUser.hp2 || picUser.hp1);
+      }
+
+      closeBlastModal();
+      const container = document.getElementById('page-content');
+      if (container) renderRiwayatNotifikasi(container);
+      showToast(`Notifikasi ${channelChoice} berhasil dikirim ke ${divisi}!`);
+    }
+
+    function exportNotifExcel() {
+      const headers = ['No', 'Waktu Kirim', 'Channel', 'Kategori Notifikasi', 'Penerima', 'Divisi', 'Subjek', 'Status'];
+      const csvLines = [
+        headers.join(','),
+        ...riwayatNotifikasiList.map((n, idx) => [
+          idx + 1,
+          `"${(n.waktuKirim || '').replace(/"/g, '""')}"`,
+          `"${(n.channel || '').replace(/"/g, '""')}"`,
+          `"${(n.kategori || '').replace(/"/g, '""')}"`,
+          `"${(n.penerima || '').replace(/"/g, '""')}"`,
+          `"${(n.divisi || '').replace(/"/g, '""')}"`,
+          `"${(n.subjek || '').replace(/"/g, '""')}"`,
+          `"${(n.status || '').replace(/"/g, '""')}"`
+        ].join(','))
+      ];
+      const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Riwayat_Notifikasi_Blast_SIPATUH.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('File Excel (CSV) Riwayat Notifikasi berhasil diunduh!');
+    }
+
+    // =========================================================================
+    // PAGE 3: REPORT -> REALISASI PELAPORAN (/pelaporan)
+    // =========================================================================
+    let pelaporanFilters = {
+      owner: 'All',
+      pelapor: 'All',
+      periode: 'All',
+      sanksi: 'All',
+      status: 'All',
+      tahun: 'All',
+      search: ''
+    };
+
+    function renderRealisasiPelaporan(container) {
+      const owners = ['All', ...new Set(pelaporanList.map(p => p.owner).filter(Boolean))];
+      const pelapors = ['All', ...new Set(pelaporanList.map(p => p.pelapor).filter(Boolean))];
+      const periodes = ['All', ...new Set(pelaporanList.map(p => p.periode).filter(Boolean))];
+      const sanksis = ['All', ...new Set(pelaporanList.map(p => p.sanksi).filter(Boolean))];
+      const statuses = ['All', ...new Set(pelaporanList.map(p => p.statusRealisasi).filter(Boolean))];
+      const tahuns = ['All', '2026', '2025', '2024'];
+
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-6">
+            Realisasi Pelaporan
+          </h2>
+
+          <!-- 2-Column Filter Section (matching screenshot 3) -->
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3.5 text-[11.5px] mb-6">
+            <!-- Left Column -->
+            <div class="space-y-3.5">
+              <div class="grid grid-cols-12 items-center gap-3">
+                <label class="col-span-4 text-gray-600 font-medium">Reporting Owner</label>
+                <div class="col-span-8">
+                  <select id="flt-owner" onchange="applyPelaporanFilters()" class="sipatuh-input text-gray-600">
+                    ${owners.map(v => `<option value="${v}" ${pelaporanFilters.owner === v ? 'selected' : ''}>${v}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 items-center gap-3">
+                <label class="col-span-4 text-gray-600 font-medium">Pelapor</label>
+                <div class="col-span-8">
+                  <select id="flt-pelapor" onchange="applyPelaporanFilters()" class="sipatuh-input text-gray-600">
+                    ${pelapors.map(v => `<option value="${v}" ${pelaporanFilters.pelapor === v ? 'selected' : ''}>${v}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 items-center gap-3">
+                <label class="col-span-4 text-gray-600 font-medium">Periode Pelaporan</label>
+                <div class="col-span-8">
+                  <select id="flt-periode" onchange="applyPelaporanFilters()" class="sipatuh-input text-gray-600">
+                    ${periodes.map(v => `<option value="${v}" ${pelaporanFilters.periode === v ? 'selected' : ''}>${v}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-3.5">
+              <div class="grid grid-cols-12 items-center gap-3">
+                <label class="col-span-4 text-gray-600 font-medium">Sanksi</label>
+                <div class="col-span-8">
+                  <select id="flt-sanksi" onchange="applyPelaporanFilters()" class="sipatuh-input text-gray-600">
+                    ${sanksis.map(v => `<option value="${v}" ${pelaporanFilters.sanksi === v ? 'selected' : ''}>${v}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 items-center gap-3">
+                <label class="col-span-4 text-gray-600 font-medium">Status Realisasi</label>
+                <div class="col-span-8">
+                  <select id="flt-status" onchange="applyPelaporanFilters()" class="sipatuh-input text-gray-600">
+                    ${statuses.map(v => `<option value="${v}" ${pelaporanFilters.status === v ? 'selected' : ''}>${v}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 items-center gap-3">
+                <label class="col-span-4 text-gray-600 font-medium">Tahun Pelaporan</label>
+                <div class="col-span-8">
+                  <select id="flt-tahun" onchange="applyPelaporanFilters()" class="sipatuh-input text-gray-600">
+                    ${tahuns.map(v => `<option value="${v}" ${pelaporanFilters.tahun === v ? 'selected' : ''}>${v}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Toolbar: Excel button (left) & Search input (right) -->
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <button onclick="exportPelaporanExcel()"
+              class="px-3 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-[11px] font-medium rounded shadow-sm transition-colors">
+              Excel
+            </button>
+
+            <div class="flex items-center gap-2 text-[11.5px] text-gray-600">
+              <label for="pelaporan-search">Search:</label>
+              <input type="text" id="pelaporan-search" value="${pelaporanFilters.search}" oninput="applyPelaporanFilters()"
+                class="border border-gray-300 rounded px-2.5 py-1 text-[11.5px] focus:outline-none focus:border-[#2557d6] w-44" />
+            </div>
+          </div>
+
+          <!-- Wide Horizontal Scrollable Table -->
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[1550px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-12">No <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-44">Regulasi <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-28">Tujuan<br>Pelaporan <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-72">Kewajiban <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-28">Sanksi <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-40">Reporter Owner <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-40">Pelapor <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-28">Periode<br>Pelaporan <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-44">Keterangan periode Pelaporan <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-28">Tanggal<br>Jatuh<br>Tempo <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-32">Hitung Waktu<br>Pelaksanaan(Hari) <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-32">Status<br>realisasi <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-28">Status<br>Lapor <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header border-r border-gray-100 w-28">Catatan<br>Approval <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header w-28">Tanggal<br>Realisasi <span class="sort-icons">&uarr;&darr;</span></th>
+                </tr>
+              </thead>
+              <tbody id="pelaporan-tbody" class="divide-y divide-gray-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+      renderPelaporanRows();
+    }
+
+    function applyPelaporanFilters() {
+      pelaporanFilters.owner = document.getElementById('flt-owner').value;
+      pelaporanFilters.pelapor = document.getElementById('flt-pelapor').value;
+      pelaporanFilters.periode = document.getElementById('flt-periode').value;
+      pelaporanFilters.sanksi = document.getElementById('flt-sanksi').value;
+      pelaporanFilters.status = document.getElementById('flt-status').value;
+      pelaporanFilters.tahun = document.getElementById('flt-tahun').value;
+      pelaporanFilters.search = document.getElementById('pelaporan-search').value.toLowerCase();
+      renderPelaporanRows();
+    }
+
+    function renderPelaporanRows() {
+      const tbody = document.getElementById('pelaporan-tbody');
+      if (!tbody) return;
+
+      const filtered = pelaporanList.filter(item => {
+        if (pelaporanFilters.owner !== 'All' && item.owner !== pelaporanFilters.owner) return false;
+        if (pelaporanFilters.pelapor !== 'All' && item.pelapor !== pelaporanFilters.pelapor) return false;
+        if (pelaporanFilters.periode !== 'All' && item.periode !== pelaporanFilters.periode) return false;
+        if (pelaporanFilters.sanksi !== 'All' && item.sanksi !== pelaporanFilters.sanksi) return false;
+        if (pelaporanFilters.status !== 'All' && item.statusRealisasi !== pelaporanFilters.status) return false;
+        if (pelaporanFilters.tahun !== 'All' && item.tahun !== pelaporanFilters.tahun) return false;
+        if (pelaporanFilters.search) {
+          const hay = Object.values(item).join(' ').toLowerCase();
+          if (!hay.includes(pelaporanFilters.search)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="15" class="py-6 text-center text-gray-500">Tidak ada data pelaporan yang sesuai filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((row, idx) => `
+        <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40 align-top">
+          <td class="py-4 px-3 border-r border-gray-100">${idx + 1}</td>
+          <td class="py-4 px-3 border-r border-gray-100 leading-relaxed">${row.regulasi}</td>
+          <td class="py-4 px-3 border-r border-gray-100">${row.tujuan}</td>
+          <td class="py-4 px-3 border-r border-gray-100 leading-relaxed">${row.kewajiban}</td>
+          <td class="py-4 px-3 border-r border-gray-100 leading-relaxed">${row.sanksi}</td>
+          <td class="py-4 px-3 border-r border-gray-100 leading-relaxed">${row.owner}</td>
+          <td class="py-4 px-3 border-r border-gray-100 leading-relaxed">${row.pelapor}</td>
+          <td class="py-4 px-3 border-r border-gray-100">${row.periode}</td>
+          <td class="py-4 px-3 border-r border-gray-100">${row.ketPeriode}</td>
+          <td class="py-4 px-3 border-r border-gray-100">${row.tglJatuhTempo}</td>
+          <td class="py-4 px-3 border-r border-gray-100">${row.hitungWaktu}</td>
+          <td class="py-4 px-3 border-r border-gray-100 leading-relaxed">${row.statusRealisasi}</td>
+          <td class="py-4 px-3 border-r border-gray-100 leading-relaxed">${row.statusLapor}</td>
+          <td class="py-4 px-3 border-r border-gray-100">${row.catatan}</td>
+          <td class="py-4 px-3">${row.tglRealisasi}</td>
+        </tr>
+      `).join('');
+    }
+
+    function exportPelaporanExcel() {
+      const headers = ['No', 'Regulasi', 'Tujuan Pelaporan', 'Kewajiban', 'Sanksi', 'Reporter Owner', 'Pelapor', 'Periode Pelaporan', 'Tanggal Jatuh Tempo', 'Hitung Waktu', 'Status Realisasi', 'Status Lapor', 'Tanggal Realisasi'];
+      const csvLines = [
+        headers.join(','),
+        ...pelaporanList.map((r, i) => [
+          i + 1,
+          `"${(r.regulasi || '').replace(/"/g, '""')}"`,
+          `"${(r.tujuan || '').replace(/"/g, '""')}"`,
+          `"${(r.kewajiban || '').replace(/"/g, '""')}"`,
+          `"${(r.sanksi || '').replace(/"/g, '""')}"`,
+          `"${(r.owner || '').replace(/"/g, '""')}"`,
+          `"${(r.pelapor || '').replace(/"/g, '""')}"`,
+          `"${(r.periode || '').replace(/"/g, '""')}"`,
+          `"${(r.tglJatuhTempo || '').replace(/"/g, '""')}"`,
+          `"${(r.hitungWaktu || '').replace(/"/g, '""')}"`,
+          `"${(r.statusRealisasi || '').replace(/"/g, '""')}"`,
+          `"${(r.statusLapor || '').replace(/"/g, '""')}"`,
+          `"${(r.tglRealisasi || '').replace(/"/g, '""')}"`
+        ].join(','))
+      ];
+      const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Realisasi_Pelaporan_SIPATUH.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('File Excel (CSV) Realisasi Pelaporan berhasil diunduh!');
+    }
+
+    // =========================================================================
+    // PAGE 4: MASTER -> MASTER USER (/master-user)
+    // =========================================================================
+    let userTableState = {
+      pageSize: 10,
+      currentPage: 1,
+      search: '',
+      sortCol: 'nama',
+      sortDir: 'asc'
+    };
+
+    function renderMasterUser(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-5">
+            Master User
+          </h2>
+
+          <!-- Top Right Dark Slate Button: + Tambahkan User -->
+          <div class="flex justify-end mb-4">
+            <button onclick="openUserModal()"
+              class="px-3.5 py-2 bg-[#4b5563] hover:bg-[#374151] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-pen text-[10px]"></i>
+              <span>Tambahkan User</span>
+            </button>
+          </div>
+
+          <!-- DataTables Controls: Show 10 entries & Search -->
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3 text-[11.5px] text-gray-600">
+            <div class="flex items-center gap-1.5">
+              <span>Show</span>
+              <select id="user-page-size" onchange="changeUserPageSize()"
+                class="border border-gray-400 rounded-sm px-1.5 py-0.5 text-[11.5px] bg-white focus:outline-none">
+                <option value="10" ${userTableState.pageSize === 10 ? 'selected' : ''}>10</option>
+                <option value="25" ${userTableState.pageSize === 25 ? 'selected' : ''}>25</option>
+                <option value="50" ${userTableState.pageSize === 50 ? 'selected' : ''}>50</option>
+                <option value="100" ${userTableState.pageSize === 100 ? 'selected' : ''}>100</option>
+              </select>
+              <span>entries</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <label for="user-search-input">Search:</label>
+              <input type="text" id="user-search-input" value="${userTableState.search}" oninput="searchMasterUsers()"
+                class="border border-gray-300 rounded px-2.5 py-1 text-[11.5px] focus:outline-none focus:border-[#2557d6] w-44" />
+            </div>
+          </div>
+
+          <!-- Master User Table -->
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[1150px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th onclick="sortMasterUsers('id')" class="py-3 px-3 sort-header border-r border-gray-100 w-12">No <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('nama')" class="py-3 px-3 sort-header border-r border-gray-100 w-44">Nama <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('divisi')" class="py-3 px-3 sort-header border-r border-gray-100 w-64">Divisi <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('inisial')" class="py-3 px-3 sort-header border-r border-gray-100 w-16">Inisial <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('jabatan')" class="py-3 px-3 sort-header border-r border-gray-100 w-44">Jabatan <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('role')" class="py-3 px-3 sort-header border-r border-gray-100 w-36">Role <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('hp1')" class="py-3 px-3 sort-header border-r border-gray-100 w-32 text-center">Nomor<br>Handphone <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('hp2')" class="py-3 px-3 sort-header border-r border-gray-100 w-36 text-center">Nomor Handphone<br>Kedua <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('email')" class="py-3 px-3 sort-header border-r border-gray-100 w-44">Email <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th class="py-3 px-3 sort-header text-center w-24">Action <span class="sort-icons">&uarr;&darr;</span></th>
+                </tr>
+              </thead>
+              <tbody id="master-user-tbody" class="divide-y divide-gray-200">
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Footer Info & Pagination Controls (matching screenshot 4) -->
+          <div id="master-user-pagination" class="mt-4 flex flex-wrap items-center justify-between gap-3 text-[11.5px] text-gray-600">
+          </div>
+        </div>
+      `;
+      renderMasterUserRows();
+    }
+
+    function changeUserPageSize() {
+      userTableState.pageSize = parseInt(document.getElementById('user-page-size').value, 10);
+      userTableState.currentPage = 1;
+      renderMasterUserRows();
+    }
+
+    function searchMasterUsers() {
+      userTableState.search = document.getElementById('user-search-input').value.toLowerCase();
+      userTableState.currentPage = 1;
+      renderMasterUserRows();
+    }
+
+    function sortMasterUsers(col) {
+      if (userTableState.sortCol === col) {
+        userTableState.sortDir = userTableState.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        userTableState.sortCol = col;
+        userTableState.sortDir = 'asc';
+      }
+      renderMasterUserRows();
+    }
+
+    function goToUserPage(page) {
+      userTableState.currentPage = page;
+      renderMasterUserRows();
+    }
+
+    function renderMasterUserRows() {
+      const tbody = document.getElementById('master-user-tbody');
+      const pagDiv = document.getElementById('master-user-pagination');
+      if (!tbody || !pagDiv) return;
+
+      let filtered = masterUsersList.filter(u => {
+        if (!userTableState.search) return true;
+        return (
+          u.nama.toLowerCase().includes(userTableState.search) ||
+          u.divisi.toLowerCase().includes(userTableState.search) ||
+          u.inisial.toLowerCase().includes(userTableState.search) ||
+          u.jabatan.toLowerCase().includes(userTableState.search) ||
+          u.role.toLowerCase().includes(userTableState.search) ||
+          u.email.toLowerCase().includes(userTableState.search) ||
+          u.hp1.includes(userTableState.search)
+        );
+      });
+
+      filtered.sort((a, b) => {
+        const valA = a[userTableState.sortCol];
+        const valB = b[userTableState.sortCol];
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return userTableState.sortDir === 'asc' ? valA - valB : valB - valA;
+        }
+        return userTableState.sortDir === 'asc'
+          ? String(valA).localeCompare(String(valB))
+          : String(valB).localeCompare(String(valA));
+      });
+
+      const totalEntries = filtered.length;
+      const totalPages = Math.max(1, Math.ceil(totalEntries / userTableState.pageSize));
+      if (userTableState.currentPage > totalPages) userTableState.currentPage = totalPages;
+
+      const startIdx = (userTableState.currentPage - 1) * userTableState.pageSize;
+      const endIdx = Math.min(startIdx + userTableState.pageSize, totalEntries);
+      const pageItems = filtered.slice(startIdx, endIdx);
+
+      if (pageItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-gray-500">Data user tidak ditemukan.</td></tr>`;
+      } else {
+        tbody.innerHTML = pageItems.map((u, idx) => `
+          <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40">
+            <td class="py-3.5 px-3 border-r border-gray-100">${startIdx + idx + 1}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.nama}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.divisi}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.inisial}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.jabatan}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.role}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.hp1}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.hp2}</td>
+            <td class="py-3.5 px-3 border-r border-gray-100">${u.email}</td>
+            <td class="py-3.5 px-3 text-center">
+              <div class="relative inline-block action-dropdown-wrapper">
+                <button type="button" onclick="toggleRowActionMenu(${u.id})"
+                  class="px-2.5 py-1 bg-[#f3f4f6] hover:bg-gray-200 border border-gray-400 rounded-sm text-[11px] text-gray-700 inline-flex items-center gap-1">
+                  <span>Action</span>
+                  <i class="fa-solid fa-caret-down text-[9px]"></i>
+                </button>
+                <div id="action-menu-${u.id}" class="action-dropdown-menu hidden absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded shadow-lg z-30 text-left py-1 text-[11px]">
+                  <button type="button" onclick="editMasterUser(${u.id})" class="w-full px-3 py-1.5 hover:bg-gray-100 text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-blue-600"></i> Edit
+                  </button>
+                  <button type="button" onclick="deleteMasterUser(${u.id})" class="w-full px-3 py-1.5 hover:bg-gray-100 text-red-600 flex items-center gap-2">
+                    <i class="fa-solid fa-trash"></i> Delete
+                  </button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      const showingFrom = totalEntries === 0 ? 0 : startIdx + 1;
+      const cur = userTableState.currentPage;
+
+      let pagesHtml = '';
+      const addPageBtn = (p) => {
+        const activeClass = p === cur
+          ? 'bg-[#3b82f6] text-white border-[#3b82f6] font-medium'
+          : 'bg-white hover:bg-gray-100 text-gray-600 border-transparent';
+        pagesHtml += `<button onclick="goToUserPage(${p})" class="px-2.5 py-1 rounded-sm border ${activeClass}">${p}</button>`;
+      };
+
+      if (totalPages <= 7) {
+        for (let p = 1; p <= totalPages; p++) addPageBtn(p);
+      } else {
+        if (cur <= 4) {
+          for (let p = 1; p <= 5; p++) addPageBtn(p);
+          pagesHtml += `<span class="px-1.5 text-gray-400">...</span>`;
+          addPageBtn(totalPages);
+        } else if (cur >= totalPages - 3) {
+          addPageBtn(1);
+          pagesHtml += `<span class="px-1.5 text-gray-400">...</span>`;
+          for (let p = totalPages - 4; p <= totalPages; p++) addPageBtn(p);
+        } else {
+          addPageBtn(1);
+          pagesHtml += `<span class="px-1.5 text-gray-400">...</span>`;
+          for (let p = cur - 1; p <= cur + 1; p++) addPageBtn(p);
+          pagesHtml += `<span class="px-1.5 text-gray-400">...</span>`;
+          addPageBtn(totalPages);
+        }
+      }
+
+      pagDiv.innerHTML = `
+        <div>Showing ${showingFrom} to ${endIdx} of ${totalEntries} entries</div>
+        <div class="flex items-center gap-1">
+          <button onclick="goToUserPage(${Math.max(1, cur - 1)})" ${cur === 1 ? 'disabled' : ''}
+            class="px-2.5 py-1 rounded-sm text-gray-500 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+            Previous
+          </button>
+          ${pagesHtml}
+          <button onclick="goToUserPage(${Math.min(totalPages, cur + 1)})" ${cur === totalPages ? 'disabled' : ''}
+            class="px-2.5 py-1 rounded-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+            Next
+          </button>
+        </div>
+      `;
+    }
+
+    function toggleRowActionMenu(userId) {
+      const target = document.getElementById(`action-menu-${userId}`);
+      const wasHidden = target ? target.classList.contains('hidden') : true;
+      document.querySelectorAll('.action-dropdown-menu').forEach(m => m.classList.add('hidden'));
+      if (target && wasHidden) target.classList.remove('hidden');
+    }
+
+    function openUserModal(userObj = null) {
+      const modal = document.getElementById('user-modal');
+      const title = document.getElementById('user-modal-title');
+      if (!modal) return;
+      if (userObj) {
+        title.textContent = 'Edit User';
+        document.getElementById('edit-user-id').value = userObj.id;
+        document.getElementById('user-nama').value = userObj.nama;
+        document.getElementById('user-inisial').value = userObj.inisial;
+        document.getElementById('user-divisi').value = userObj.divisi;
+        document.getElementById('user-jabatan').value = userObj.jabatan;
+        document.getElementById('user-role').value = userObj.role;
+        document.getElementById('user-email').value = userObj.email;
+        document.getElementById('user-hp1').value = userObj.hp1;
+        document.getElementById('user-hp2').value = userObj.hp2;
+      } else {
+        title.textContent = 'Tambahkan User';
+        document.getElementById('user-form').reset();
+        document.getElementById('edit-user-id').value = '';
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeUserModal() {
+      const modal = document.getElementById('user-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function editMasterUser(userId) {
+      const user = masterUsersList.find(u => u.id === userId);
+      if (user) openUserModal(user);
+    }
+
+    function deleteMasterUser(userId) {
+      masterUsersList = masterUsersList.filter(u => u.id !== userId);
+      renderMasterUserRows();
+      showToast('User berhasil dihapus dari Master User', 'info');
+    }
+
+    function saveUserForm(e) {
+      e.preventDefault();
+      const editId = document.getElementById('edit-user-id').value;
+      const payload = {
+        nama: document.getElementById('user-nama').value.trim(),
+        inisial: document.getElementById('user-inisial').value.trim().toUpperCase(),
+        divisi: document.getElementById('user-divisi').value.trim(),
+        jabatan: document.getElementById('user-jabatan').value.trim(),
+        role: document.getElementById('user-role').value,
+        email: document.getElementById('user-email').value.trim(),
+        hp1: document.getElementById('user-hp1').value.trim(),
+        hp2: document.getElementById('user-hp2').value.trim() || document.getElementById('user-hp1').value.trim()
+      };
+
+      if (editId) {
+        const idx = masterUsersList.findIndex(u => u.id === parseInt(editId, 10));
+        if (idx !== -1) {
+          masterUsersList[idx] = { ...masterUsersList[idx], ...payload };
+          showToast('Data user berhasil diperbarui!');
+        }
+      } else {
+        const nextId = masterUsersList.reduce((max, u) => Math.max(max, u.id), 0) + 1;
+        masterUsersList.unshift({ id: nextId, ...payload });
+        showToast('User baru berhasil ditambahkan!');
+      }
+
+      closeUserModal();
+      renderMasterUserRows();
+    }
+
+    // =========================================================================
+    // OTHER SUB-PAGES (Master Regulasi, Master Sanksi, Report, FAQ, Manual Book)
+    // =========================================================================
+    function renderMasterRegulasi(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-[15px] font-normal text-gray-600">Master Regulasi</h2>
+            <button onclick="navigateTo('add-data-regulasi')"
+              class="px-3.5 py-2 bg-[#4b5563] hover:bg-[#374151] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Tambah Regulasi</span>
+            </button>
+          </div>
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[900px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Regulasi</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Perihal</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Tanggal Terbit</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Regulator</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Jenis</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Status</th>
+                  <th class="py-3 px-3">Attachment</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                ${masterRegulasiList.map((r, idx) => `
+                  <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40">
+                    <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${r.regulasi}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${r.perihal}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${r.tanggalTerbit}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${r.regulator}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${r.jenis}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">
+                      <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px]">${r.status}</span>
+                    </td>
+                    <td class="py-3.5 px-3 text-[#2557d6] underline cursor-pointer" onclick="showToast('Membuka lampiran ${r.attachment}', 'info')">${r.attachment}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMasterSanksi(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-[15px] font-normal text-gray-600">Master Sanksi</h2>
+            <button onclick="navigateTo('add-data-sanksi')"
+              class="px-3.5 py-2 bg-[#4b5563] hover:bg-[#374151] text-white text-[11.5px] font-medium rounded shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Add Data Sanksi</span>
+            </button>
+          </div>
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[1380px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-40">Nomor Surat Regulator</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal Surat</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-64">Perihal</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tujuan<br>Pelaporan</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-48">Reporter Owner</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-36">Jenis Sanksi</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-32">Nominal Denda</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-28">Tanggal<br>Jatuh Tempo</th>
+                  <th class="py-3 px-3 border-r border-gray-100 w-44">File Surat Sanksi</th>
+                  <th class="py-3 px-3 text-center w-24">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                ${masterSanksiList.map((s, idx) => `
+                  <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40 align-top">
+                    <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-800">${s.nomorSurat}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalSurat}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.perihal}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${s.tujuanPelaporan}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100 leading-relaxed">${s.reporterOwner}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${s.jenisSanksi}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100 font-medium text-gray-700">${s.nominalDenda !== '-' ? 'Rp ' + s.nominalDenda : '-'}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${s.tanggalJatuhTempo}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">
+                      <button type="button" onclick="showToast('Mengunduh ${s.fileSurat}', 'info')"
+                        class="text-[#2557d6] hover:underline inline-flex items-center gap-1.5 text-left">
+                        <i class="fa-solid fa-file-pdf text-red-500"></i>
+                        <span class="break-all">${s.fileSurat}</span>
+                      </button>
+                    </td>
+                    <td class="py-3.5 px-3 text-center">
+                      <button type="button" onclick="deleteMasterSanksi(${s.id})"
+                        class="px-2.5 py-1 bg-[#f3f4f6] hover:bg-red-50 hover:text-red-600 border border-gray-300 rounded-sm text-[11px] text-gray-700">
+                        Hapus
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function deleteMasterSanksi(sanksiId) {
+      masterSanksiList = masterSanksiList.filter(s => s.id !== sanksiId);
+      const container = document.getElementById('page-content');
+      if (container) renderMasterSanksi(container);
+      showToast('Data sanksi berhasil dihapus', 'info');
+    }
+
+    function renderReportKewajiban(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h2 class="text-[15px] font-normal text-gray-600">Report Kewajiban</h2>
+            <button onclick="exportPelaporanExcel()" class="px-3 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-[11px] font-medium rounded shadow-sm">Excel</button>
+          </div>
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="min-w-[950px] w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Kewajiban Pelaporan</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Tujuan</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Reporting Owner</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Periode</th>
+                  <th class="py-3 px-3">Jatuh Tempo</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                ${pelaporanList.map((p, idx) => `
+                  <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'}">
+                    <td class="py-3.5 px-3 border-r border-gray-100">${idx + 1}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${p.kewajiban}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${p.tujuan || '-'}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${p.owner}</td>
+                    <td class="py-3.5 px-3 border-r border-gray-100">${p.periode}</td>
+                    <td class="py-3.5 px-3">${p.tglJatuhTempo}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReportRegulasiEksternal(container) {
+      renderMasterRegulasi(container);
+      const h2 = container.querySelector('h2');
+      if (h2) h2.textContent = 'Report Regulasi Eksternal';
+    }
+
+    function renderGenericMaster(container, route) {
+      const titles = {
+        'master-regulator': 'Master Regulator',
+        'master-divisi-email': 'Master Divisi Email',
+        'master-pelapor': 'Master Pelapor',
+        'master-reporting-owner': 'Master Reporting Owner',
+        'master-tujuan-pelaporan': 'Master Tujuan Pelaporan',
+        'master-jenis-regulasi': 'Master Jenis Regulasi'
+      };
+      const sampleRows = {
+        'master-regulator': [
+          ['OJK', 'Otoritas Jasa Keuangan', 'Gedung Soemitro Djojohadikusumo, Jakarta'],
+          ['BI', 'Bank Indonesia', 'Jl. M.H. Thamrin No.2, Jakarta'],
+          ['KEMENKEU', 'Kementerian Keuangan Republik Indonesia', 'Jl. Dr. Wahidin Raya No.1, Jakarta']
+        ],
+        'master-divisi-email': [
+          ['KPH', 'Divisi Kepatuhan', 'compliance@pnm.co.id'],
+          ['AMK', 'Divisi Akuntansi Manajemen dan Keuangan', 'amk@pnm.co.id'],
+          ['COS', 'Corporate Secretary', 'corsec@pnm.co.id']
+        ]
+      };
+      const rows = sampleRows[route] || [
+        ['01', 'Divisi Kepatuhan (KPH)', 'Aktif'],
+        ['02', 'Divisi Akuntansi Manajemen dan Keuangan (AMK)', 'Aktif'],
+        ['03', 'Corporate Secretary (COS)', 'Aktif']
+      ];
+
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-5">${titles[route] || 'Data Master'}</h2>
+          <div class="overflow-x-auto border border-gray-200 rounded-sm">
+            <table class="w-full border-collapse text-[11px] text-gray-600">
+              <thead>
+                <tr class="bg-white border-b-2 border-gray-200 text-gray-700 font-semibold text-left">
+                  <th class="py-3 px-3 border-r border-gray-100 w-12">No</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Kode</th>
+                  <th class="py-3 px-3 border-r border-gray-100">Nama / Uraian</th>
+                  <th class="py-3 px-3">Keterangan</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                ${rows.map((r, i) => `
+                  <tr class="${i % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'}">
+                    <td class="py-3 px-3 border-r border-gray-100">${i + 1}</td>
+                    <td class="py-3 px-3 border-r border-gray-100 font-medium">${r[0]}</td>
+                    <td class="py-3 px-3 border-r border-gray-100">${r[1]}</td>
+                    <td class="py-3 px-3">${r[2]}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFaq(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-5">Frequently Asked Questions (FAQ)</h2>
+          <div class="space-y-3 text-xs text-gray-600 max-w-4xl">
+            <div class="border border-gray-200 rounded p-4 bg-[#f9fafb]">
+              <p class="font-semibold text-gray-800 mb-1">1. Bagaimana cara menambahkan data regulasi baru?</p>
+              <p>Pilih menu <strong>ADD &rarr; Add Data Regulasi</strong> pada sidebar kiri, isi seluruh kolom wajib termasuk tanggal terbit dan regulator, lalu klik tombol <strong>Submit</strong>.</p>
+            </div>
+            <div class="border border-gray-200 rounded p-4 bg-[#f9fafb]">
+              <p class="font-semibold text-gray-800 mb-1">2. Bagaimana alur pengajuan dan approval data sanksi?</p>
+              <p>Input data sanksi melalui menu <strong>ADD &rarr; Add Data Sanksi</strong>. Data akan masuk ke menu <strong>SANKSI &rarr; Report Sanksi</strong> untuk dilakukan verifikasi &amp; <strong>Approval</strong>. Setelah disetujui, data otomatis tampil pada <strong>SANKSI &rarr; Realisasi Sanksi</strong>.</p>
+            </div>
+            <div class="border border-gray-200 rounded p-4 bg-[#f9fafb]">
+              <p class="font-semibold text-gray-800 mb-1">3. Bagaimana cara mengunduh laporan ke dalam format Excel?</p>
+              <p>Buka halaman <strong>REPORT &rarr; Realisasi Pelaporan</strong> atau <strong>SANKSI &rarr; Report Sanksi</strong>, atur filter sesuai kebutuhan, lalu klik tombol biru <strong>Excel</strong> di bagian kiri atas tabel.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderManualBook(container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
+          <h2 class="text-[15px] font-normal text-gray-600 mb-5">Manual Book SIPATUH v1.1</h2>
+          <div class="border border-gray-200 rounded p-5 bg-[#f9fafb] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded bg-blue-100 text-[#2557d6] flex items-center justify-center text-xl">
+                <i class="fa-solid fa-file-pdf"></i>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-800">Panduan Pengguna Sistem Informasi Kepatuhan (SIPATUH).pdf</p>
+                <p class="text-xs text-gray-500 mt-0.5">Divisi Kepatuhan PT Permodalan Nasional Madani &bull; Version 1.1</p>
+              </div>
+            </div>
+            <button onclick="showToast('Mengunduh Manual Book SIPATUH v1.1...', 'info')"
+              class="px-4 py-2 bg-[#2557d6] hover:bg-blue-700 text-white text-xs font-medium rounded shadow-sm flex items-center gap-2">
+              <i class="fa-solid fa-download"></i> Unduh PDF
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // INITIALIZATION
+    // =========================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      const hashRoute = window.location.hash.replace('#', '');
+      const validRoutes = [
+        'dashboard-monitoring', 'add-data-regulasi', 'add-data-kewajiban', 'add-data-sanksi',
+        'pelaporan', 'report-kewajiban', 'report-regulasi-eksternal',
+        'report-sanksi', 'realisasi-sanksi', 'riwayat-notifikasi',
+        'master-user', 'master-regulasi', 'master-regulator', 'master-divisi-email',
+        'master-sanksi', 'master-pelapor', 'master-reporting-owner',
+        'master-tujuan-pelaporan', 'master-jenis-regulasi', 'faq', 'manual-book'
+      ];
+      if (validRoutes.includes(hashRoute)) {
+        navigateTo(hashRoute);
+      } else {
+        navigateTo('dashboard-monitoring');
+      }
+    });
+  </script>
+</body>
+</html>
