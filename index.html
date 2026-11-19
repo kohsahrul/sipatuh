@@ -720,6 +720,22 @@
     </div>
   </div>
 
+  <!-- MODAL FOR VIEW & UPDATE SANKSI -->
+  <div id="view-sanksi-modal" class="fixed inset-0 bg-black/40 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 w-full max-w-xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+        <h3 id="view-sanksi-modal-title" class="text-sm font-semibold text-gray-700">Detail Data Sanksi</h3>
+        <button onclick="closeViewSanksiModal()" class="text-gray-400 hover:text-gray-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="view-sanksi-body" class="p-5 space-y-2.5 text-xs text-gray-600 max-h-[70vh] overflow-y-auto"></div>
+      <div class="px-5 py-3 border-t border-gray-200 flex justify-end">
+        <button onclick="closeViewSanksiModal()" class="px-4 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-medium">Tutup</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // =========================================================================
     // STATE & DATA MASTER SIPATUH
@@ -2577,15 +2593,9 @@
 
       container.innerHTML = `
         <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <div>
-              <h2 class="text-[15px] font-normal text-gray-600">Report Sanksi (Verifikasi &amp; Approval)</h2>
-              <p class="text-[11px] text-gray-400 mt-0.5">Alur: Add Data Sanksi &rarr; Report Sanksi (Approval) &rarr; Realisasi Sanksi</p>
-            </div>
-            <button onclick="navigateTo('add-data-sanksi')"
-              class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded-sm shadow-sm">
-              + Add Data Sanksi
-            </button>
+          <div class="mb-6">
+            <h2 class="text-[15px] font-normal text-gray-600">Report Sanksi (Verifikasi &amp; Approval)</h2>
+            <p class="text-[11px] text-gray-400 mt-0.5">Alur: Add Data Sanksi &rarr; Report Sanksi (Approval) &rarr; Realisasi Sanksi</p>
           </div>
 
           <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-3.5 text-[11.5px] mb-6">
@@ -2718,6 +2728,8 @@
           statusBadge = `<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10.5px] font-medium whitespace-nowrap">Pending Approval</span>`;
         }
 
+        const isApproved = s.statusApproval === 'Approved';
+
         return `
           <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40 align-top">
             <td class="py-3.5 px-3">${idx + 1}</td>
@@ -2740,17 +2752,47 @@
             <td class="py-3.5 px-3">${statusBadge}</td>
             <td class="py-3.5 px-3 leading-relaxed">${s.catatanApproval || '-'}</td>
             <td class="py-3.5 px-3 text-center whitespace-nowrap">
-              ${s.statusApproval === 'Approved'
-                ? `<button onclick="navigateTo('realisasi-sanksi')" class="px-2.5 py-1 bg-[#2563eb] hover:bg-blue-700 text-white rounded-sm text-[10.5px] font-medium">Lihat Realisasi</button>`
-                : `<button onclick="openApprovalSanksiModal(${s.id})" class="px-2.5 py-1 bg-[#00a680] hover:bg-[#008f6e] text-white rounded-sm text-[10.5px] font-medium">Approval</button>`
-              }
+              <div class="relative inline-block action-dropdown-wrapper">
+                <button type="button" onclick="toggleRowActionMenu('rs-${s.id}')"
+                  class="px-3 py-1.5 bg-[#f3f4f6] hover:bg-[#374151] hover:text-white border border-gray-400 rounded text-[11px] text-gray-800 font-medium inline-flex items-center gap-1.5 transition-colors">
+                  <span>Action</span>
+                  <i class="fa-solid fa-caret-down text-[9px]"></i>
+                </button>
+                <div id="action-menu-rs-${s.id}" class="action-dropdown-menu hidden absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-xl z-40 text-left py-1.5 text-[11.5px]">
+                  <button type="button" ${isApproved ? 'disabled' : `onclick="openApprovalSanksiModal(${s.id}, 'Approved')"`}
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 ${isApproved ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-50'}">
+                    <i class="fa-regular fa-thumbs-up w-3.5 text-center"></i>
+                    <span>Approve</span>
+                  </button>
+                  <button type="button" ${isApproved ? 'disabled' : `onclick="openApprovalSanksiModal(${s.id}, 'Rejected')"`}
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 ${isApproved ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-50'}">
+                    <i class="fa-solid fa-pen w-3.5 text-center"></i>
+                    <span>Revisi</span>
+                  </button>
+                  <button type="button" onclick="deleteSanksiFromReport(${s.id}, 'report')"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-regular fa-thumbs-up w-3.5 text-center"></i>
+                    <span>Hapus Data</span>
+                  </button>
+                  <button type="button" onclick="openUpdateSanksiModal(${s.id})"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-regular fa-pen-to-square w-3.5 text-center"></i>
+                    <span>Update Sanksi</span>
+                  </button>
+                  <button type="button" onclick="openViewSanksiModal(${s.id}, 'Sanksi')"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-regular fa-eye w-3.5 text-center"></i>
+                    <span>View Sanksi</span>
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    function openApprovalSanksiModal(id) {
+    function openApprovalSanksiModal(id, defaultDecision = 'Approved') {
       const item = masterSanksiList.find(s => s.id === id);
       if (!item) return;
 
@@ -2758,12 +2800,149 @@
       document.getElementById('appr-sanksi-nomor').textContent = item.nomorSurat;
       document.getElementById('appr-sanksi-perihal').textContent = item.perihal;
       document.getElementById('appr-sanksi-jenis').textContent = item.jenisSanksi + (item.nominalDenda !== '-' ? ` (Rp ${item.nominalDenda})` : '');
-      document.getElementById('appr-sanksi-decision').value = 'Approved';
+      document.getElementById('appr-sanksi-decision').value = defaultDecision;
       document.getElementById('appr-sanksi-catatan').value = item.catatanApproval || '';
 
       const modal = document.getElementById('approval-sanksi-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+    }
+
+    function deleteSanksiFromReport(id, source) {
+      const item = masterSanksiList.find(s => s.id === id);
+      masterSanksiList = masterSanksiList.filter(s => s.id !== id);
+      if (source === 'realisasi') {
+        filterRealisasiSanksiTable();
+      } else {
+        filterReportSanksiTable();
+      }
+      showToast(`Data sanksi "${item ? item.nomorSurat : ''}" berhasil dihapus`, 'info');
+    }
+
+    function openViewSanksiModal(id, mode = 'Sanksi') {
+      const s = masterSanksiList.find(x => x.id === id);
+      if (!s) return;
+
+      document.getElementById('view-sanksi-modal-title').textContent = mode === 'Realisasi' ? 'Detail Realisasi Sanksi' : 'Detail Data Sanksi';
+      document.getElementById('view-sanksi-body').innerHTML = `
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Nomor Surat Regulator</span>
+          <span class="col-span-2 font-semibold text-gray-800">${s.nomorSurat}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Tanggal Surat &amp; Tahun</span>
+          <span class="col-span-2 text-gray-700">${s.tanggalSurat} (Tahun Pelaporan: ${s.tahunPelaporan || '-'})</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Perihal</span>
+          <span class="col-span-2 text-gray-700">${s.perihal}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Regulasi Terkait</span>
+          <span class="col-span-2 text-gray-700">${s.regulasi || '-'}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Tujuan Pelaporan</span>
+          <span class="col-span-2 text-gray-700">${s.tujuanPelaporan}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Reporter Owner</span>
+          <span class="col-span-2 text-gray-700">${s.reporterOwner}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Jenis Sanksi &amp; Nominal</span>
+          <span class="col-span-2 font-medium text-red-600">${s.jenisSanksi} ${s.nominalDenda !== '-' ? '(Rp ' + s.nominalDenda + ')' : ''}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Tanggal Jatuh Tempo</span>
+          <span class="col-span-2 font-medium text-gray-800">${s.tanggalJatuhTempo}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Status Approval</span>
+          <span class="col-span-2 text-gray-700">${s.statusApproval} (${s.tanggalApproval})</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Status Realisasi</span>
+          <span class="col-span-2 text-gray-700">${s.statusRealisasi} (${s.tanggalRealisasi})</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <span class="text-gray-400">Keterangan</span>
+          <span class="col-span-2 text-gray-700">${s.keteranganRealisasi || s.keterangan || '-'}</span>
+        </div>
+      `;
+      const modal = document.getElementById('view-sanksi-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeViewSanksiModal() {
+      const modal = document.getElementById('view-sanksi-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openUpdateSanksiModal(id) {
+      const s = masterSanksiList.find(x => x.id === id);
+      if (!s) return;
+      document.getElementById('view-sanksi-modal-title').textContent = 'Update Data Sanksi';
+      document.getElementById('view-sanksi-body').innerHTML = `
+        <form onsubmit="saveUpdatedSanksi(event, ${s.id})" class="space-y-3">
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Nomor Surat Regulator *</label>
+            <input type="text" id="upd-snk-nomor" required value="${s.nomorSurat}" class="sipatuh-input" />
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Perihal *</label>
+            <input type="text" id="upd-snk-perihal" required value="${s.perihal}" class="sipatuh-input" />
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Regulasi</label>
+            <input type="text" id="upd-snk-regulasi" value="${s.regulasi === '-' ? '' : (s.regulasi || '')}" class="sipatuh-input" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Jenis Sanksi</label>
+              <select id="upd-snk-jenis" class="sipatuh-input">
+                <option value="Denda Administratif" ${s.jenisSanksi === 'Denda Administratif' ? 'selected' : ''}>Denda Administratif</option>
+                <option value="Peringatan Tertulis" ${s.jenisSanksi === 'Peringatan Tertulis' ? 'selected' : ''}>Peringatan Tertulis</option>
+                <option value="Teguran Keterlambatan" ${s.jenisSanksi === 'Teguran Keterlambatan' ? 'selected' : ''}>Teguran Keterlambatan</option>
+                <option value="Pembatasan Kegiatan Usaha" ${s.jenisSanksi === 'Pembatasan Kegiatan Usaha' ? 'selected' : ''}>Pembatasan Kegiatan Usaha</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-gray-600 font-medium mb-1">Nominal Denda (Rp)</label>
+              <input type="text" id="upd-snk-nominal" oninput="formatRupiahInput(this)" value="${s.nominalDenda === '-' ? '' : s.nominalDenda}" class="sipatuh-input" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-gray-600 font-medium mb-1">Keterangan Tambahan</label>
+            <textarea id="upd-snk-ket" rows="2" class="sipatuh-input">${s.keterangan === '-' ? '' : (s.keterangan || '')}</textarea>
+          </div>
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" onclick="closeViewSanksiModal()" class="px-3.5 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium">Batal</button>
+            <button type="submit" class="px-3.5 py-1.5 rounded bg-[#00a680] hover:bg-[#008f6e] text-white font-medium">Simpan Perubahan</button>
+          </div>
+        </form>
+      `;
+      const modal = document.getElementById('view-sanksi-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function saveUpdatedSanksi(e, id) {
+      e.preventDefault();
+      const s = masterSanksiList.find(x => x.id === id);
+      if (!s) return;
+      s.nomorSurat = document.getElementById('upd-snk-nomor').value.trim();
+      s.perihal = document.getElementById('upd-snk-perihal').value.trim();
+      s.regulasi = document.getElementById('upd-snk-regulasi').value.trim() || '-';
+      s.jenisSanksi = document.getElementById('upd-snk-jenis').value;
+      const nom = document.getElementById('upd-snk-nominal').value.trim();
+      s.nominalDenda = s.jenisSanksi === 'Denda Administratif' ? (nom || '0') : '-';
+      s.keterangan = document.getElementById('upd-snk-ket').value.trim() || '-';
+      closeViewSanksiModal();
+      filterReportSanksiTable();
+      showToast(`Data sanksi "${s.nomorSurat}" berhasil diperbarui!`, 'success');
     }
 
     function closeApprovalSanksiModal() {
@@ -2970,14 +3149,76 @@
               }
             </td>
             <td class="py-3.5 px-3 text-center whitespace-nowrap">
-              <button onclick="openRealisasiSanksiModal(${s.id})"
-                class="px-2.5 py-1 bg-[#2563eb] hover:bg-blue-700 text-white rounded-sm text-[10.5px] font-medium">
-                ${s.statusRealisasi === 'Selesai / Sudah Dibayar' ? 'Update' : 'Realisasi'}
-              </button>
+              <div class="relative inline-block action-dropdown-wrapper">
+                <button type="button" onclick="toggleRowActionMenu('real-${s.id}')"
+                  class="px-3 py-1.5 bg-[#f3f4f6] hover:bg-[#374151] hover:text-white border border-gray-400 rounded text-[11px] text-gray-800 font-medium inline-flex items-center gap-1.5 transition-colors">
+                  <span>Action</span>
+                  <i class="fa-solid fa-caret-down text-[9px]"></i>
+                </button>
+                <div id="action-menu-real-${s.id}" class="action-dropdown-menu hidden absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-xl z-40 text-left py-1.5 text-[11.5px]">
+                  <button type="button" onclick="openViewSanksiModal(${s.id}, 'Realisasi')"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-regular fa-eye w-3.5 text-center"></i>
+                    <span>View Realisasi</span>
+                  </button>
+                  <button type="button" onclick="openRealisasiSanksiModal(${s.id})"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-solid fa-arrow-up-from-bracket w-3.5 text-center"></i>
+                    <span>Upload Realisasi</span>
+                  </button>
+                  <button type="button" onclick="openViewRegulatorModal(${s.id})"
+                    class="w-full px-3.5 py-2 flex items-center gap-2.5 text-gray-600 hover:bg-gray-50">
+                    <i class="fa-regular fa-eye w-3.5 text-center"></i>
+                    <span>View Regulator</span>
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
         `;
       }).join('');
+    }
+
+    function openViewRegulatorModal(id) {
+      const s = masterSanksiList.find(x => x.id === id);
+      if (!s) return;
+
+      document.getElementById('view-sanksi-modal-title').textContent = 'View Regulator & Surat Sanksi';
+      document.getElementById('view-sanksi-body').innerHTML = `
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Tujuan Pelaporan / Regulator</span>
+          <span class="col-span-2 font-semibold text-gray-800">${s.tujuanPelaporan}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Nomor Surat Regulator</span>
+          <span class="col-span-2 font-medium text-gray-800">${s.nomorSurat}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Tanggal Surat</span>
+          <span class="col-span-2 text-gray-700">${s.tanggalSurat}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Regulasi Terkait</span>
+          <span class="col-span-2 text-gray-700">${s.regulasi || '-'}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-b border-gray-100 pb-2">
+          <span class="text-gray-400">Perihal</span>
+          <span class="col-span-2 text-gray-700">${s.perihal}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 items-center pt-1">
+          <span class="text-gray-400">File Surat Regulator</span>
+          <div class="col-span-2">
+            <button type="button" onclick="showToast('Membuka dokumen ${s.fileSurat}...', 'info')"
+              class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-[#2557d6] border border-blue-200 rounded text-[11px] font-medium inline-flex items-center gap-2">
+              <i class="fa-regular fa-file-pdf text-red-500"></i>
+              <span>${s.fileSurat}</span>
+            </button>
+          </div>
+        </div>
+      `;
+      const modal = document.getElementById('view-sanksi-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
     function openRealisasiSanksiModal(id) {
