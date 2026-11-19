@@ -2660,6 +2660,7 @@
                   <th class="py-3.5 px-3 w-28">Tanggal<br>Surat</th>
                   <th class="py-3.5 px-3 w-24">Tahun<br>Pelaporan</th>
                   <th class="py-3.5 px-3 w-64">Perihal</th>
+                  <th class="py-3.5 px-3 w-52">Regulasi</th>
                   <th class="py-3.5 px-3 w-28">Tujuan<br>Pelaporan</th>
                   <th class="py-3.5 px-3 w-48">Reporter Owner</th>
                   <th class="py-3.5 px-3 w-36">Jenis Sanksi</th>
@@ -2693,7 +2694,7 @@
         if (tahunVal !== 'All' && row.tahunPelaporan !== tahunVal) return false;
         if (statusVal !== 'All' && row.statusApproval !== statusVal) return false;
         if (searchVal) {
-          const blob = `${row.nomorSurat} ${row.tahunPelaporan} ${row.perihal} ${row.tujuanPelaporan} ${row.reporterOwner} ${row.jenisSanksi} ${row.statusApproval}`.toLowerCase();
+          const blob = `${row.nomorSurat} ${row.tahunPelaporan} ${row.perihal} ${row.regulasi || ''} ${row.tujuanPelaporan} ${row.reporterOwner} ${row.jenisSanksi} ${row.statusApproval}`.toLowerCase();
           if (!blob.includes(searchVal)) return false;
         }
         return true;
@@ -2703,7 +2704,7 @@
       if (!tbody) return;
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="14" class="py-8 text-center text-gray-400">Tidak ada data sanksi yang sesuai filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" class="py-8 text-center text-gray-400">Tidak ada data sanksi yang sesuai filter.</td></tr>`;
         return;
       }
 
@@ -2724,6 +2725,7 @@
             <td class="py-3.5 px-3 whitespace-nowrap">${s.tanggalSurat}</td>
             <td class="py-3.5 px-3 font-medium text-gray-700 whitespace-nowrap">${s.tahunPelaporan || '-'}</td>
             <td class="py-3.5 px-3 leading-relaxed">${s.perihal}</td>
+            <td class="py-3.5 px-3 leading-relaxed">${s.regulasi || '-'}</td>
             <td class="py-3.5 px-3 whitespace-nowrap">${s.tujuanPelaporan}</td>
             <td class="py-3.5 px-3 leading-relaxed">${s.reporterOwner}</td>
             <td class="py-3.5 px-3 whitespace-nowrap">${s.jenisSanksi}</td>
@@ -2886,6 +2888,7 @@
                   <th class="py-3.5 px-3 w-40">Nomor Surat<br>Regulator</th>
                   <th class="py-3.5 px-3 w-24">Tahun<br>Pelaporan</th>
                   <th class="py-3.5 px-3 w-64">Perihal</th>
+                  <th class="py-3.5 px-3 w-52">Regulasi</th>
                   <th class="py-3.5 px-3 w-28">Tujuan<br>Pelaporan</th>
                   <th class="py-3.5 px-3 w-48">Reporter Owner</th>
                   <th class="py-3.5 px-3 w-36">Jenis Sanksi</th>
@@ -2921,7 +2924,7 @@
         if (tahunVal !== 'All' && row.tahunPelaporan !== tahunVal) return false;
         if (statusVal !== 'All' && row.statusRealisasi !== statusVal) return false;
         if (searchVal) {
-          const blob = `${row.nomorSurat} ${row.tahunPelaporan} ${row.perihal} ${row.tujuanPelaporan} ${row.reporterOwner} ${row.jenisSanksi} ${row.statusRealisasi}`.toLowerCase();
+          const blob = `${row.nomorSurat} ${row.tahunPelaporan} ${row.perihal} ${row.regulasi || ''} ${row.tujuanPelaporan} ${row.reporterOwner} ${row.jenisSanksi} ${row.statusRealisasi}`.toLowerCase();
           if (!blob.includes(searchVal)) return false;
         }
         return true;
@@ -2931,7 +2934,7 @@
       if (!tbody) return;
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="14" class="py-8 text-center text-gray-400">Belum ada data sanksi yang telah di-approve sesuai filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" class="py-8 text-center text-gray-400">Belum ada data sanksi yang telah di-approve sesuai filter.</td></tr>`;
         return;
       }
 
@@ -2951,6 +2954,7 @@
             <td class="py-3.5 px-3 font-medium text-gray-800 whitespace-nowrap">${s.nomorSurat}</td>
             <td class="py-3.5 px-3 font-medium text-gray-700 whitespace-nowrap">${s.tahunPelaporan || '-'}</td>
             <td class="py-3.5 px-3 leading-relaxed">${s.perihal}</td>
+            <td class="py-3.5 px-3 leading-relaxed">${s.regulasi || '-'}</td>
             <td class="py-3.5 px-3 whitespace-nowrap">${s.tujuanPelaporan}</td>
             <td class="py-3.5 px-3 leading-relaxed">${s.reporterOwner}</td>
             <td class="py-3.5 px-3 whitespace-nowrap">${s.jenisSanksi}</td>
@@ -3027,13 +3031,14 @@
     }
 
     function exportSanksiExcel(filename, dataList) {
-      const headers = ['No', 'Nomor Surat Regulator', 'Tanggal Surat', 'Tahun Pelaporan', 'Perihal', 'Tujuan Pelaporan', 'Reporter Owner', 'Jenis Sanksi', 'Nominal Denda', 'Tanggal Jatuh Tempo', 'Status Approval', 'Status Realisasi', 'Tanggal Realisasi'];
+      const headers = ['No', 'Nomor Surat Regulator', 'Tanggal Surat', 'Tahun Pelaporan', 'Perihal', 'Regulasi', 'Tujuan Pelaporan', 'Reporter Owner', 'Jenis Sanksi', 'Nominal Denda', 'Tanggal Jatuh Tempo', 'Status Approval', 'Status Realisasi', 'Tanggal Realisasi'];
       const rows = dataList.map((s, i) => [
         i + 1,
         `"${s.nomorSurat}"`,
         `"${s.tanggalSurat}"`,
         `"${s.tahunPelaporan || '-'}"`,
         `"${(s.perihal || '').replace(/"/g, '""')}"`,
+        `"${(s.regulasi || '-').replace(/"/g, '""')}"`,
         `"${s.tujuanPelaporan}"`,
         `"${s.reporterOwner}"`,
         `"${s.jenisSanksi}"`,
