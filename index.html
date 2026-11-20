@@ -507,6 +507,13 @@
             <input type="text" id="user-hp2" class="sipatuh-input" placeholder="6281234567890" />
           </div>
         </div>
+        <div class="pt-1">
+          <label class="block text-gray-600 font-medium mb-1">Flagging Penerima WA Blast *</label>
+          <select id="user-wa-blast" class="sipatuh-input">
+            <option value="true">Penerima WA Blast (Aktif)</option>
+            <option value="false">Tidak Menerima WA Blast (Nonaktif)</option>
+          </select>
+        </div>
         <div class="pt-3 border-t border-gray-100 flex justify-end gap-2">
           <button type="button" onclick="closeUserModal()" class="px-4 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium">Batal</button>
           <button type="submit" class="px-4 py-1.5 rounded bg-[#0d9488] hover:bg-[#0f766e] text-white font-medium">Simpan</button>
@@ -897,16 +904,16 @@
 
     // Master User Data (matching screenshot 4 + additional entries for 155 total pagination)
     const initialUsers = [
-      { id: 1, nama: 'Abelia Putri Aisyah', divisi: 'Divisi Strategi dan Perencanaan Teknologi Informasi', inisial: 'BEL', jabatan: 'Staf', role: 'Administrator IT', hp1: '81311777004', hp2: '6281311777004', email: 'apaisyah0504@pnm.co.id' },
-      { id: 2, nama: 'Adhi Prasetyo Bondoarto', divisi: 'Divisi Akuntansi Manajemen dan Keuangan', inisial: 'APB', jabatan: 'Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '6281297774473', hp2: '6281297774473', email: 'adhi_pb@pnm.co.id' },
-      { id: 3, nama: 'Adi Nugraha', divisi: 'Divisi Akuntansi Manajemen dan Keuangan', inisial: 'GNU', jabatan: 'Kepala Divisi', role: 'Supervisor Pelapor', hp1: '62', hp2: '6281321210642', email: 'anugraha1225@pnm.co.id' },
-      { id: 4, nama: 'Adri Arasyarif Utomo', divisi: 'Divisi Legal', inisial: 'AUT', jabatan: 'Officer', role: 'Admin Pelapor', hp1: '6282110100255', hp2: '6282110100255', email: 'automo1204@pnm.co.id' },
-      { id: 5, nama: 'Agung Pribowo', divisi: 'Divisi Audit Operasional dan Investigasi', inisial: 'PBW', jabatan: 'Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '628111111412', hp2: '628111111412', email: 'apribowo0322@pnm.co.id' },
-      { id: 6, nama: 'Agus Setiawan', divisi: 'Divisi Enterprise Information Management', inisial: 'GST', jabatan: 'Plt. Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '6285289898933', hp2: '6285289898933', email: 'asetiawan0811@pnm.co.id' },
-      { id: 7, nama: 'Ahmad Aji Noviansyah', divisi: 'Divisi Rencana Strategi Perusahaan', inisial: 'NIV', jabatan: 'Kepala Bagian', role: 'Supervisor Pelapor', hp1: '6281381087181', hp2: '6281212858347', email: 'aanoviansyah1116@pnm.co.id' },
-      { id: 8, nama: 'Ahmad Rifkie', divisi: 'Divisi Tresuri dan Pendanaan', inisial: 'ARK', jabatan: 'Kepala Bagian', role: 'Supervisor Pelapor', hp1: '6285773883175', hp2: '6285773883175', email: 'ahmad_r@pnm.co.id' },
-      { id: 9, nama: 'Ahmad Suhaemi', divisi: 'Divisi Kepatuhan', inisial: 'AHA', jabatan: 'Wakil Kepala Divisi', role: 'Administrator IT', hp1: '6281381087181', hp2: '6281381087181', email: 'ahmad_aha@pnm.co.id' },
-      { id: 10, nama: 'Aisha Diva Sedona Yuwani', divisi: 'Divisi Human Capital Strategic & Development', inisial: 'AVY', jabatan: 'Staf', role: 'Admin Pelapor', hp1: '628111209459', hp2: '628111209459', email: 'adsyuwani0525@pnm.co.id' }
+      { id: 1, nama: 'Abelia Putri Aisyah', divisi: 'Divisi Strategi dan Perencanaan Teknologi Informasi', inisial: 'BEL', jabatan: 'Staf', role: 'Administrator IT', hp1: '81311777004', hp2: '6281311777004', email: 'apaisyah0504@pnm.co.id', waBlast: false },
+      { id: 2, nama: 'Adhi Prasetyo Bondoarto', divisi: 'Divisi Akuntansi Manajemen dan Keuangan', inisial: 'APB', jabatan: 'Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '6281297774473', hp2: '6281297774473', email: 'adhi_pb@pnm.co.id', waBlast: true },
+      { id: 3, nama: 'Adi Nugraha', divisi: 'Divisi Akuntansi Manajemen dan Keuangan', inisial: 'GNU', jabatan: 'Kepala Divisi', role: 'Supervisor Pelapor', hp1: '62', hp2: '6281321210642', email: 'anugraha1225@pnm.co.id', waBlast: true },
+      { id: 4, nama: 'Adri Arasyarif Utomo', divisi: 'Divisi Legal', inisial: 'AUT', jabatan: 'Officer', role: 'Admin Pelapor', hp1: '6282110100255', hp2: '6282110100255', email: 'automo1204@pnm.co.id', waBlast: true },
+      { id: 5, nama: 'Agung Pribowo', divisi: 'Divisi Audit Operasional dan Investigasi', inisial: 'PBW', jabatan: 'Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '628111111412', hp2: '628111111412', email: 'apribowo0322@pnm.co.id', waBlast: false },
+      { id: 6, nama: 'Agus Setiawan', divisi: 'Divisi Enterprise Information Management', inisial: 'GST', jabatan: 'Plt. Wakil Kepala Divisi', role: 'Supervisor Pelapor', hp1: '6285289898933', hp2: '6285289898933', email: 'asetiawan0811@pnm.co.id', waBlast: false },
+      { id: 7, nama: 'Ahmad Aji Noviansyah', divisi: 'Divisi Rencana Strategi Perusahaan', inisial: 'NIV', jabatan: 'Kepala Bagian', role: 'Supervisor Pelapor', hp1: '6281381087181', hp2: '6281212858347', email: 'aanoviansyah1116@pnm.co.id', waBlast: true },
+      { id: 8, nama: 'Ahmad Rifkie', divisi: 'Divisi Tresuri dan Pendanaan', inisial: 'ARK', jabatan: 'Kepala Bagian', role: 'Supervisor Pelapor', hp1: '6285773883175', hp2: '6285773883175', email: 'ahmad_r@pnm.co.id', waBlast: true },
+      { id: 9, nama: 'Ahmad Suhaemi', divisi: 'Divisi Kepatuhan', inisial: 'AHA', jabatan: 'Wakil Kepala Divisi', role: 'Administrator IT', hp1: '6281381087181', hp2: '6281381087181', email: 'ahmad_aha@pnm.co.id', waBlast: true },
+      { id: 10, nama: 'Aisha Diva Sedona Yuwani', divisi: 'Divisi Human Capital Strategic & Development', inisial: 'AVY', jabatan: 'Staf', role: 'Admin Pelapor', hp1: '628111209459', hp2: '628111209459', email: 'adsyuwani0525@pnm.co.id', waBlast: false }
     ];
 
     const sampleDivisions = [
@@ -933,7 +940,8 @@
         role: sampleRoles[i % sampleRoles.length],
         hp1: `62812${1000000 + i * 37}`,
         hp2: `62812${1000000 + i * 37}`,
-        email: `user${code}@pnm.co.id`
+        email: `user${code}@pnm.co.id`,
+        waBlast: i % 2 === 0
       });
     }
 
@@ -2234,12 +2242,14 @@
     }
 
     function getPicByDivisi(divisi) {
-      const matched = masterUsersList.find(u => u.divisi.toLowerCase() === divisi.toLowerCase());
+      const matched = masterUsersList.find(u => u.divisi.toLowerCase() === divisi.toLowerCase() && u.waBlast !== false)
+        || masterUsersList.find(u => u.divisi.toLowerCase() === divisi.toLowerCase());
       if (matched) return matched;
       return {
         nama: 'PIC Pelapor ' + divisi,
         email: 'pic.pelapor@pnm.co.id',
-        hp2: '6281297774473'
+        hp2: '6281297774473',
+        waBlast: true
       };
     }
 
@@ -3310,23 +3320,9 @@
 
       container.innerHTML = `
         <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-            <div>
-              <h2 class="text-[15px] font-normal text-gray-600">Riwayat Notifikasi (Email Blast &amp; WA Blast)</h2>
-              <p class="text-[11px] text-gray-400 mt-0.5">Auto-Email saat Add Data Sanksi &amp; Scheduler WA Blast otomatis pada H-7, H-3, H-2, H-1, dan H-0 jatuh tempo.</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <button onclick="runWaBlastSchedulerSimulation()"
-                class="px-3.5 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white text-[11.5px] font-medium rounded-sm shadow-sm flex items-center gap-1.5 transition-colors">
-                <i class="fa-brands fa-whatsapp text-xs"></i>
-                <span>Simulasi Scheduler WA Blast (H-7, H-3, H-2, H-1, H-0)</span>
-              </button>
-              <button onclick="openBlastModal()"
-                class="px-3.5 py-1.5 bg-[#00a680] hover:bg-[#008f6e] text-white text-[11.5px] font-medium rounded-sm shadow-sm flex items-center gap-1.5 transition-colors">
-                <i class="fa-solid fa-paper-plane text-[10px]"></i>
-                <span>Kirim Blast Manual</span>
-              </button>
-            </div>
+          <div class="mb-5">
+            <h2 class="text-[15px] font-normal text-gray-600">Riwayat Notifikasi (Email Blast &amp; WA Blast)</h2>
+            <p class="text-[11px] text-gray-400 mt-0.5">Auto-Email saat Add Data Sanksi &amp; Scheduler WA Blast otomatis pada H-7, H-3, H-2, H-1, dan H-0 jatuh tempo.</p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6 text-xs">
@@ -3703,17 +3699,31 @@
     let userPageSize = 10;
     let userCurrentPage = 1;
     let userSearchQuery = '';
+    let userWaFilter = 'all';
     let userSortCol = 'nama';
     let userSortDir = 'asc';
 
     function renderMasterUser(container) {
+      const totalWaAktif = masterUsersList.filter(u => u.waBlast).length;
+      const totalWaNonaktif = masterUsersList.filter(u => !u.waBlast).length;
+
       container.innerHTML = `
         <div class="bg-white rounded-md shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-200/80 p-5 md:p-6">
-          <h2 class="text-[15px] font-normal text-gray-600 mb-6">
-            Master User
-          </h2>
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 class="text-[15px] font-normal text-gray-600">
+                Master User
+              </h2>
+              <div class="flex flex-wrap items-center gap-2 mt-1.5 text-[11px]">
+                <span class="px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                  <i class="fa-brands fa-whatsapp mr-1"></i> Penerima WA Blast: <strong id="count-wa-aktif">${totalWaAktif}</strong> User
+                </span>
+                <span class="px-2.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 font-medium">
+                  Tidak Menerima WA Blast: <strong id="count-wa-nonaktif">${totalWaNonaktif}</strong> User
+                </span>
+              </div>
+            </div>
 
-          <div class="flex justify-end mb-4">
             <button type="button" onclick="openAddUserModal()"
               class="px-3.5 py-1.5 bg-[#4b5563] hover:bg-[#374151] text-white text-[11.5px] font-medium rounded-sm shadow-sm flex items-center gap-1.5 transition-colors">
               <i class="fa-solid fa-pen text-[10px]"></i>
@@ -3722,16 +3732,28 @@
           </div>
 
           <div class="flex flex-wrap items-center justify-between gap-3 mb-3 text-[11.5px] text-gray-600">
-            <div class="flex items-center gap-1.5">
-              <span>Show</span>
-              <select id="user-entries-select" onchange="changeUserPageSize(this.value)"
-                class="border border-gray-400 rounded-sm px-1.5 py-0.5 text-[11.5px] bg-white focus:outline-none">
-                <option value="10" ${userPageSize === 10 ? 'selected' : ''}>10</option>
-                <option value="25" ${userPageSize === 25 ? 'selected' : ''}>25</option>
-                <option value="50" ${userPageSize === 50 ? 'selected' : ''}>50</option>
-                <option value="100" ${userPageSize === 100 ? 'selected' : ''}>100</option>
-              </select>
-              <span>entries</span>
+            <div class="flex flex-wrap items-center gap-4">
+              <div class="flex items-center gap-1.5">
+                <span>Show</span>
+                <select id="user-entries-select" onchange="changeUserPageSize(this.value)"
+                  class="border border-gray-400 rounded-sm px-1.5 py-0.5 text-[11.5px] bg-white focus:outline-none">
+                  <option value="10" ${userPageSize === 10 ? 'selected' : ''}>10</option>
+                  <option value="25" ${userPageSize === 25 ? 'selected' : ''}>25</option>
+                  <option value="50" ${userPageSize === 50 ? 'selected' : ''}>50</option>
+                  <option value="100" ${userPageSize === 100 ? 'selected' : ''}>100</option>
+                </select>
+                <span>entries</span>
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <span>Flagging WA Blast:</span>
+                <select id="user-wa-filter" onchange="handleUserWaFilter(this.value)"
+                  class="border border-gray-300 rounded-sm px-2 py-0.5 text-[11.5px] bg-white focus:outline-none focus:border-[#2557d6]">
+                  <option value="all" ${userWaFilter === 'all' ? 'selected' : ''}>Semua User</option>
+                  <option value="yes" ${userWaFilter === 'yes' ? 'selected' : ''}>Penerima WA Blast</option>
+                  <option value="no" ${userWaFilter === 'no' ? 'selected' : ''}>Tidak Menerima WA Blast</option>
+                </select>
+              </div>
             </div>
 
             <div class="flex items-center gap-2">
@@ -3742,7 +3764,7 @@
           </div>
 
           <div class="overflow-x-auto border-t border-b border-gray-200">
-            <table class="min-w-[1120px] w-full border-collapse text-[11px] text-gray-600">
+            <table class="min-w-[1260px] w-full border-collapse text-[11px] text-gray-600">
               <thead>
                 <tr class="bg-white border-b border-gray-200 text-gray-700 font-semibold text-left">
                   <th onclick="sortMasterUsers('id')" class="py-3.5 px-3 sort-header w-12">No <span class="sort-icons"><span class="sort-up">&uarr;</span><span class="sort-down">&darr;</span></span></th>
@@ -3754,6 +3776,7 @@
                   <th onclick="sortMasterUsers('hp1')" class="py-3.5 px-3 sort-header w-32">Nomor<br>Handphone <span class="sort-icons">&uarr;&darr;</span></th>
                   <th onclick="sortMasterUsers('hp2')" class="py-3.5 px-3 sort-header w-32">Nomor Handphone<br>Kedua <span class="sort-icons">&uarr;&darr;</span></th>
                   <th onclick="sortMasterUsers('email')" class="py-3.5 px-3 sort-header w-44">Email <span class="sort-icons">&uarr;&darr;</span></th>
+                  <th onclick="sortMasterUsers('waBlast')" class="py-3.5 px-3 sort-header w-40 text-center">Status<br>WA Blast <span class="sort-icons">&uarr;&darr;</span></th>
                   <th class="py-3.5 px-3 sort-header w-24 text-center">Action <span class="sort-icons">&uarr;&darr;</span></th>
                 </tr>
               </thead>
@@ -3774,6 +3797,11 @@
 
     function getFilteredSortedUsers() {
       let list = [...masterUsersList];
+      if (userWaFilter === 'yes') {
+        list = list.filter(u => u.waBlast === true);
+      } else if (userWaFilter === 'no') {
+        list = list.filter(u => u.waBlast === false);
+      }
       if (userSearchQuery) {
         const q = userSearchQuery.toLowerCase();
         list = list.filter(u =>
@@ -3783,13 +3811,17 @@
           u.jabatan.toLowerCase().includes(q) ||
           u.role.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
-          u.hp1.includes(q)
+          u.hp1.includes(q) ||
+          (u.waBlast ? 'penerima wa blast' : 'tidak menerima wa blast').includes(q)
         );
       }
 
       list.sort((a, b) => {
         const valA = a[userSortCol];
         const valB = b[userSortCol];
+        if (typeof valA === 'boolean' && typeof valB === 'boolean') {
+          return userSortDir === 'asc' ? (valA === valB ? 0 : valA ? -1 : 1) : (valA === valB ? 0 : valA ? 1 : -1);
+        }
         if (typeof valA === 'number' && typeof valB === 'number') {
           return userSortDir === 'asc' ? valA - valB : valB - valA;
         }
@@ -3801,6 +3833,11 @@
     }
 
     function refreshMasterUserTable() {
+      const countAktifEl = document.getElementById('count-wa-aktif');
+      const countNonaktifEl = document.getElementById('count-wa-nonaktif');
+      if (countAktifEl) countAktifEl.textContent = masterUsersList.filter(u => u.waBlast).length;
+      if (countNonaktifEl) countNonaktifEl.textContent = masterUsersList.filter(u => !u.waBlast).length;
+
       const filtered = getFilteredSortedUsers();
       const total = filtered.length;
       const totalPages = Math.max(1, Math.ceil(total / userPageSize));
@@ -3814,7 +3851,7 @@
       if (!tbody) return;
 
       if (pageRows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-gray-400">Tidak ada data user yang ditemukan.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-gray-400">Tidak ada data user yang ditemukan.</td></tr>`;
       } else {
         tbody.innerHTML = pageRows.map((u, idx) => `
           <tr class="${idx % 2 === 0 ? 'bg-[#f9fafb]' : 'bg-white'} hover:bg-blue-50/40">
@@ -3827,6 +3864,17 @@
             <td class="py-3.5 px-3">${u.hp1}</td>
             <td class="py-3.5 px-3">${u.hp2}</td>
             <td class="py-3.5 px-3">${u.email}</td>
+            <td class="py-3.5 px-3 text-center whitespace-nowrap">
+              <button type="button" onclick="toggleUserWaBlast(${u.id})" title="Klik untuk mengubah status WA Blast"
+                class="px-2.5 py-1 rounded text-[10.5px] font-medium border transition-colors inline-flex items-center gap-1.5 ${
+                  u.waBlast
+                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-500 border-gray-300'
+                }">
+                <i class="fa-brands fa-whatsapp ${u.waBlast ? 'text-emerald-600' : 'text-gray-400'}"></i>
+                <span>${u.waBlast ? 'Penerima WA' : 'Tidak Menerima'}</span>
+              </button>
+            </td>
             <td class="py-3.5 px-3 text-center">
               <div class="relative inline-block action-dropdown-wrapper">
                 <button type="button" onclick="toggleRowActionMenu(${u.id})"
@@ -3834,7 +3882,11 @@
                   <span>Action</span>
                   <i class="fa-solid fa-caret-down text-[9px]"></i>
                 </button>
-                <div id="action-menu-${u.id}" class="action-dropdown-menu hidden absolute right-0 mt-1 w-28 bg-white border border-gray-200 rounded shadow-lg z-30 text-left py-1 text-[11px]">
+                <div id="action-menu-${u.id}" class="action-dropdown-menu hidden absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded shadow-lg z-30 text-left py-1 text-[11px]">
+                  <button type="button" onclick="toggleUserWaBlast(${u.id})" class="w-full px-3 py-1.5 hover:bg-gray-100 text-gray-700 flex items-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-600 text-[11px]"></i>
+                    <span>${u.waBlast ? 'Nonaktifkan WA Blast' : 'Aktifkan WA Blast'}</span>
+                  </button>
                   <button type="button" onclick="openEditUserModal(${u.id})" class="w-full px-3 py-1.5 hover:bg-gray-100 text-gray-700 flex items-center gap-2">
                     <i class="fa-solid fa-pen-to-square text-blue-600 text-[10px]"></i> Edit
                   </button>
@@ -3924,6 +3976,23 @@
       refreshMasterUserTable();
     }
 
+    function handleUserWaFilter(val) {
+      userWaFilter = val;
+      userCurrentPage = 1;
+      refreshMasterUserTable();
+    }
+
+    function toggleUserWaBlast(id) {
+      const u = masterUsersList.find(x => x.id === id);
+      if (!u) return;
+      u.waBlast = !u.waBlast;
+      refreshMasterUserTable();
+      showToast(
+        `${u.nama} diubah menjadi ${u.waBlast ? 'Penerima WA Blast' : 'Tidak Menerima WA Blast'}`,
+        u.waBlast ? 'success' : 'info'
+      );
+    }
+
     function sortMasterUsers(col) {
       if (userSortCol === col) {
         userSortDir = userSortDir === 'asc' ? 'desc' : 'asc';
@@ -3946,6 +4015,7 @@
       document.getElementById('user-modal-title').textContent = 'Tambahkan User';
       document.getElementById('edit-user-id').value = '';
       document.getElementById('user-form').reset();
+      document.getElementById('user-wa-blast').value = 'true';
       const modal = document.getElementById('user-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -3964,6 +4034,7 @@
       document.getElementById('user-email').value = u.email;
       document.getElementById('user-hp1').value = u.hp1;
       document.getElementById('user-hp2').value = u.hp2;
+      document.getElementById('user-wa-blast').value = u.waBlast ? 'true' : 'false';
 
       const modal = document.getElementById('user-modal');
       modal.classList.remove('hidden');
@@ -3987,7 +4058,8 @@
         role: document.getElementById('user-role').value,
         email: document.getElementById('user-email').value.trim(),
         hp1: document.getElementById('user-hp1').value.trim(),
-        hp2: document.getElementById('user-hp2').value.trim() || document.getElementById('user-hp1').value.trim()
+        hp2: document.getElementById('user-hp2').value.trim() || document.getElementById('user-hp1').value.trim(),
+        waBlast: document.getElementById('user-wa-blast').value === 'true'
       };
 
       if (editId) {
